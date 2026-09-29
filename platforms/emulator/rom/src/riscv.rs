@@ -385,7 +385,6 @@ pub extern "C" fn rom_entry() -> ! {
                 )
             };
             let mut usb_driver = LpcipUsbDriver::new(usb_regs, usb_memory);
-            usb_driver.dump_registers();
             if usb_driver.init_and_enumerate().is_err() {
                 fatal_error(
                     caliptra_mcu_error::McuError::ROM_COLD_BOOT_RECOVERY_NOT_CONFIGURED_ERROR,

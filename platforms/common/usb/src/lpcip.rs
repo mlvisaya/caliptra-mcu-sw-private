@@ -32,6 +32,7 @@ const DISABLED: u32 = 1 << 30;
 const ACTIVE: u32 = 1 << 31;
 const IMPLEMENTED_INTERRUPTS: u32 = 0xc000_ffff;
 const DEFAULT_ULPI_POLL_LIMIT: u32 = 1_000_000;
+const KEEP_PHY_CLOCK: u32 = usb_combo::bits::DevcmdstatT::ForceNeedclk::SET.value;
 
 const USB3320_VENDOR_ID: [u8; 2] = [0x24, 0x04];
 const USB3320_PRODUCT_ID: [u8; 2] = [0x07, 0x00];
@@ -327,7 +328,7 @@ impl LpcipUsbDriver {
     }
 
     fn disconnect_and_initialize(&self) {
-        self.regs.dev0_csr_devcmdstat.set(0);
+        self.regs.dev0_csr_devcmdstat.set(KEEP_PHY_CLOCK);
         self.regs.dev0_csr_inten.set(0);
         self.regs.dev0_csr_intstat.set(IMPLEMENTED_INTERRUPTS);
         self.regs.dev0_csr_epliststart.set(0);
@@ -361,7 +362,8 @@ impl LpcipUsbDriver {
 
     fn connect(&self) {
         self.regs.dev0_csr_devcmdstat.set(
-            usb_combo::bits::DevcmdstatT::DevEn::SET.value
+            KEEP_PHY_CLOCK
+                | usb_combo::bits::DevcmdstatT::DevEn::SET.value
                 | usb_combo::bits::DevcmdstatT::Dcon::SET.value,
         );
     }
@@ -373,7 +375,8 @@ impl LpcipUsbDriver {
                 .is_set(usb_combo::bits::DevcmdstatT::DresC)
         })?;
         self.regs.dev0_csr_devcmdstat.set(
-            usb_combo::bits::DevcmdstatT::DevEn::SET.value
+            KEEP_PHY_CLOCK
+                | usb_combo::bits::DevcmdstatT::DevEn::SET.value
                 | usb_combo::bits::DevcmdstatT::Dcon::SET.value
                 | usb_combo::bits::DevcmdstatT::DresC::SET.value,
         );

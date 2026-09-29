@@ -221,7 +221,6 @@ pub extern "C" fn rom_entry() -> ! {
                 core::hint::spin_loop();
             }
             let mut usb_driver = LpcipUsbDriver::new(usb_regs, usb_memory);
-            usb_driver.dump_registers();
             let result = usb_driver.init_and_enumerate();
             usb_driver.dump_registers();
             if result.is_err() {
