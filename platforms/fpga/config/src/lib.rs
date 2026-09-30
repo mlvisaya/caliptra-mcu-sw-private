@@ -5,14 +5,14 @@
 pub mod flash;
 use caliptra_mcu_config::{McuMemoryMap, McuStraps, MemoryRegionType};
 
-pub const FPGA_USB_COMBO_ADDR: u32 = 0xa420_0000;
+pub const FPGA_USB_COMBO_ADDR: u32 = 0x2000_0000;
 pub const FPGA_USB_OCP_RECOVERY_ADDR: u32 = FPGA_USB_COMBO_ADDR + 0x800;
-pub const FPGA_USB_DEV0_MEM_ADDR: u32 = 0xa430_0000;
-pub const FPGA_USB_DEV1_CSR_ADDR: u32 = 0xa440_0000;
-pub const FPGA_USB_DEV1_MEM_ADDR: u32 = 0xa450_0000;
+pub const FPGA_USB_DEV0_MEM_ADDR: u32 = 0x3000_0000;
+pub const FPGA_USB_DEV1_CSR_ADDR: u32 = 0x2002_0000;
+pub const FPGA_USB_DEV1_MEM_ADDR: u32 = 0x3001_0000;
 
 pub const FPGA_MEMORY_MAP: McuMemoryMap = McuMemoryMap {
-    rom_offset: 0xb004_0000,
+    rom_offset: 0x8000_0000,
     rom_size: 128 * 1024,
     rom_stack_size: 0x2d00,
     rom_estack_size: 0x100,
@@ -22,7 +22,7 @@ pub const FPGA_MEMORY_MAP: McuMemoryMap = McuMemoryMap {
     dccm_size: 16 * 1024,
     dccm_properties: MemoryRegionType::MEMORY,
 
-    sram_offset: 0xa8c0_0000,
+    sram_offset: 0x21c0_0000,
     sram_size: 512 * 1024,
     sram_properties: MemoryRegionType::MEMORY,
 
@@ -31,23 +31,23 @@ pub const FPGA_MEMORY_MAP: McuMemoryMap = McuMemoryMap {
     pic_offset: 0x6000_0000,
     pic_properties: MemoryRegionType::MMIO,
 
-    i3c_offset: 0xa403_0000,
+    i3c_offset: 0x2000_4000,
     i3c_size: 0x1000,
     i3c_properties: MemoryRegionType::MMIO,
 
-    i3c1_offset: 0xa403_1000,
+    i3c1_offset: 0x2000_5000,
     i3c1_size: 0x1000,
     i3c1_properties: MemoryRegionType::MMIO,
 
-    mci_offset: 0xa800_0000,
-    mci_size: 0xa0_0028,
+    mci_offset: 0x2100_0000,
+    mci_size: 0xe0_0000,
     mci_properties: MemoryRegionType::MMIO,
 
-    mbox_offset: 0xa412_0000,
+    mbox_offset: 0xa002_0000,
     mbox_size: 0x28,
     mbox_properties: MemoryRegionType::MMIO,
 
-    soc_offset: 0xa413_0000,
+    soc_offset: 0xa003_0000,
     soc_size: 0x5e0,
     soc_properties: MemoryRegionType::MMIO,
 
