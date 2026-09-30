@@ -12,6 +12,7 @@ Abstract:
 
 --*/
 
+#[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
 use crate::flash::flash_drv::{
     FpgaFlashCtrl, HTG940_SECONDARY_BASE, HTG940_SECONDARY_CAPACITY, PRIMARY_FLASH_CTRL_BASE,
 };
@@ -21,6 +22,7 @@ use crate::io::{print_to_console, EXITER, FATAL_ERROR_HANDLER, FPGA_WRITER};
 core::arch::global_asm!(include_str!("start.s"));
 
 use caliptra_mcu_config::{McuMemoryMap, McuStraps};
+#[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
 use caliptra_mcu_rom_common::flash::flash_partition::FlashPartition;
 use caliptra_mcu_rom_common::{RomHooks, RomParameters};
 use caliptra_mcu_romtime::{
@@ -265,9 +267,11 @@ pub extern "C" fn rom_entry() -> ! {
         caliptra_mcu_romtime::println!("[otp-debug] Vendor hash backing-RAM readback passed");
     }
 
+    #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
     // Initialize the primary flash controller
     let primary_flash_ctrl = FpgaFlashCtrl::initialize_flash_ctrl(PRIMARY_FLASH_CTRL_BASE);
 
+    #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
     // Create a flash partition covering the entire flash
     // The partition starts at offset 0 and uses the full flash capacity
     let mut flash_partition = FlashPartition::new(
@@ -342,20 +346,27 @@ pub extern "C" fn rom_entry() -> ! {
     let hooks = LoggingRomHooks;
 
     // DOT flash is backed by the secondary flash controller.
+    #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
     let secondary_flash_ctrl =
         FpgaFlashCtrl::initialize_flash_region(HTG940_SECONDARY_BASE, HTG940_SECONDARY_CAPACITY);
+    #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
     let dot_flash: &dyn caliptra_mcu_rom_common::hil::FlashStorage = &secondary_flash_ctrl;
 
+    #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
     use caliptra_mcu_rom_common::recovery::flash::FlashImageProvider;
+    #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
     use caliptra_mcu_rom_common::recovery::{
         ErrorPolicy, ImageProviderEntry, ImageProviderManager,
     };
 
+    #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
     let mut flash_provider = FlashImageProvider::new(&mut flash_partition);
+    #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
     let mut entries = [ImageProviderEntry {
         provider: &mut flash_provider,
         policy: ErrorPolicy::Continue,
     }];
+    #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
     let manager = ImageProviderManager::new(&mut entries);
 
     #[cfg(feature = "ocp-lock")]
@@ -499,8 +510,20 @@ pub extern "C" fn rom_entry() -> ! {
         // lenient and runs the same tests with the checks enabled.
         otp_enable_integrity_check: !cfg!(feature = "test-i3c-services"),
         otp_enable_consistency_check: !cfg!(feature = "test-i3c-services"),
+        #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
         image_provider_manager: Some(manager),
-        request_recovery_boot: true,
+        request_recovery_boot: !cfg!(feature = "test-lpcip-usb-ocp-recovery"),
+        usb_recovery_boot: cfg!(feature = "test-lpcip-usb-ocp-recovery"),
+        #[cfg(feature = "test-lpcip-usb-ocp-recovery")]
+        usb_recovery_regs: Some(unsafe {
+            caliptra_mcu_romtime::StaticRef::new(
+                caliptra_mcu_config_fpga::FPGA_USB_COMBO_ADDR
+                    as *const caliptra_mcu_registers_generated::usb_combo::regs::UsbCombo,
+            )
+        }),
+        #[cfg(feature = "test-lpcip-usb-ocp-recovery")]
+        dot_flash: None,
+        #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
         dot_flash: Some(dot_flash),
         fw_manifest_dot_enabled: cfg!(feature = "test-fw-manifest-dot"),
         owner_pk_hash_policy: read_owner_pk_hash_policy(),

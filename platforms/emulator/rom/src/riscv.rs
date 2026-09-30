@@ -653,9 +653,11 @@ pub extern "C" fn rom_entry() -> ! {
     )) {
         // Simple flash-based boot without partition tables.
         // Uses flash image starting at offset 0.
+        #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
         let primary_flash_ctrl = EmulatedFlashCtrl::initialize_flash_ctrl(PRIMARY_FLASH_CTRL_BASE);
 
         // Create a flash partition covering the entire flash for direct access
+        #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
         let mut flash_partition = FlashPartition::new(
             &primary_flash_ctrl,
             "Primary Flash",
@@ -664,22 +666,42 @@ pub extern "C" fn rom_entry() -> ! {
         )
         .unwrap_or_else(|_| fatal_error(EmulatorError::InitFlashPartitionDriver.into()));
 
+        #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
         caliptra_mcu_romtime::println!("[mcu-rom] Booting from flash");
+        #[cfg(feature = "test-lpcip-usb-ocp-recovery")]
+        caliptra_mcu_romtime::println!("[mcu-rom] Booting with USB recovery");
 
+        #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
         use caliptra_mcu_rom_common::recovery::flash::FlashImageProvider;
+        #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
         use caliptra_mcu_rom_common::recovery::{
             ErrorPolicy, ImageProviderEntry, ImageProviderManager,
         };
 
+        #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
         let mut flash_provider = FlashImageProvider::new(&mut flash_partition);
+        #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
         let mut entries = [ImageProviderEntry {
             provider: &mut flash_provider,
             policy: ErrorPolicy::Continue,
         }];
+        #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
         let manager = ImageProviderManager::new(&mut entries);
 
         caliptra_mcu_rom_common::rom_start(RomParameters {
+            #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
             image_provider_manager: Some(manager),
+            usb_recovery_boot: cfg!(feature = "test-lpcip-usb-ocp-recovery"),
+            #[cfg(feature = "test-lpcip-usb-ocp-recovery")]
+            usb_recovery_regs: Some(unsafe {
+                caliptra_mcu_romtime::StaticRef::new(
+                    caliptra_mcu_registers_generated::usb_combo::USB_COMBO_ADDR
+                        as *const caliptra_mcu_registers_generated::usb_combo::regs::UsbCombo,
+                )
+            }),
+            #[cfg(feature = "test-lpcip-usb-ocp-recovery")]
+            dot_flash: None,
+            #[cfg(not(feature = "test-lpcip-usb-ocp-recovery"))]
             dot_flash: Some(dot_flash),
             owner_pk_hash_policy: read_owner_pk_hash_policy(),
             // Let the generic wire (bit 29 of mci_reg_generic_input_wires[1]) control flash boot
@@ -744,6 +766,14 @@ pub extern "C" fn rom_entry() -> ! {
         caliptra_mcu_rom_common::rom_start(RomParameters {
             dot_flash: Some(dot_flash),
             owner_pk_hash_policy: read_owner_pk_hash_policy(),
+            usb_recovery_boot: cfg!(feature = "test-lpcip-usb-ocp-recovery"),
+            #[cfg(feature = "test-lpcip-usb-ocp-recovery")]
+            usb_recovery_regs: Some(unsafe {
+                caliptra_mcu_romtime::StaticRef::new(
+                    caliptra_mcu_registers_generated::usb_combo::USB_COMBO_ADDR
+                        as *const caliptra_mcu_registers_generated::usb_combo::regs::UsbCombo,
+                )
+            }),
             cptra_mbox_axi_users: mbox_axi_users,
             cptra_fuse_axi_user: axi_user0,
             cptra_trng_axi_user: axi_user0,

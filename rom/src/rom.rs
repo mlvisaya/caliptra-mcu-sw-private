@@ -951,6 +951,15 @@ pub struct RomParameters<'a> {
     pub otp_check_timeout_override: Option<u32>,
     /// Request recovery boot (AXI recovery bypass).
     pub request_recovery_boot: bool,
+    /// Request recovery boot with Caliptra consuming images directly from the
+    /// USB OCP Recovery interface instead of an MCU-managed image provider.
+    pub usb_recovery_boot: bool,
+    /// Platform mapping for the USB OCP Recovery status registers.
+    pub usb_recovery_regs: Option<
+        caliptra_mcu_romtime::StaticRef<
+            caliptra_mcu_registers_generated::usb_combo::regs::UsbCombo,
+        >,
+    >,
     /// By default, we will set recovery status as successful after loading MCU firmware.
     /// Set this to true if you want to leave recovery status as open for further firmware image loading.
     /// Note that in 2.0, Caliptra already sets recovery status as successful so there may be a race

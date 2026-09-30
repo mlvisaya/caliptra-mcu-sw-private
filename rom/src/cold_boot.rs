@@ -40,6 +40,9 @@ use caliptra_mcu_registers_generated::fuses;
 use caliptra_mcu_registers_generated::i3c::bits::RecIntfCfg;
 use caliptra_mcu_registers_generated::mci::bits::SecurityState::DeviceLifecycle as MciDeviceLifecycle;
 use caliptra_mcu_registers_generated::mci::bits::{MboxExecute, MboxLock};
+use caliptra_mcu_registers_generated::usb_combo::bits::{
+    DeviceStatus0 as UsbDeviceStatus0, RecoveryStatus as UsbRecoveryStatus,
+};
 #[cfg(feature = "stable-owner-key")]
 use caliptra_mcu_romtime::handoff::{HandoffData, STABLE_OWNER_KEY_CMK_SIZE};
 #[cfg(feature = "ocp-lock")]
@@ -1116,20 +1119,24 @@ impl BootFlow for ColdBoot {
             straps.active_i3c
         );
 
-        // HTG940_BRAM_RECOVERY_SELECT_I3C
-        // Match Caliptra's recovery interface to the local BRAM loader.
-        if params.request_recovery_boot {
+        // Match Caliptra's recovery interface to the selected image source.
+        if params.request_recovery_boot || params.usb_recovery_boot {
+            let recovery_interface = if params.usb_recovery_boot { 0 } else { 1 };
             let caps = mci.registers.mci_reg_hw_capabilities.get();
             mci.registers
                 .mci_reg_hw_capabilities
-                .set((caps & !0x3u32) | 0x1u32);
+                .set((caps & !0x3u32) | recovery_interface);
 
             let selected = mci.registers.mci_reg_hw_capabilities.get();
             caliptra_mcu_romtime::println!(
-                "[mcu-rom] Recovery interface selection: {} (1=I3C)",
+                "[mcu-rom] Recovery interface selection: {} (0=USB, 1=I3C)",
                 selected & 0x3
             );
-            assert_eq!(selected & 0x3, 1, "I3C recovery selection failed");
+            assert_eq!(
+                selected & 0x3,
+                recovery_interface,
+                "recovery interface selection failed"
+            );
         }
 
         caliptra_mcu_romtime::println!("[mcu-rom] Setting Caliptra boot go");
@@ -1221,10 +1228,16 @@ impl BootFlow for ColdBoot {
 
         caliptra_mcu_romtime::println!("[mcu-rom] OTP initialized");
 
-        let recovery_boot = ((mci.registers.mci_reg_generic_input_wires[1].get() & (1 << 29)) != 0)
-            || params.request_recovery_boot;
+        let external_recovery_request =
+            (mci.registers.mci_reg_generic_input_wires[1].get() & (1 << 29)) != 0;
+        let mcu_managed_recovery_boot = params.request_recovery_boot
+            || (external_recovery_request && !params.usb_recovery_boot);
+        let recovery_boot =
+            external_recovery_request || params.request_recovery_boot || params.usb_recovery_boot;
 
-        if recovery_boot && (params.image_provider_manager.is_none() || !cfg!(feature = "hw-2-1")) {
+        if mcu_managed_recovery_boot
+            && (params.image_provider_manager.is_none() || !cfg!(feature = "hw-2-1"))
+        {
             caliptra_mcu_romtime::println!(
                 "Recovery boot requested but missing image provider or AXI bypass not enabled"
             );
@@ -1272,22 +1285,28 @@ impl BootFlow for ColdBoot {
         mci.set_nmi_vector(unsafe { MCU_MEMORY_MAP.rom_offset });
         mci.set_flow_checkpoint(McuRomBootStatus::WatchdogConfigured.into());
 
-        caliptra_mcu_romtime::println!("[mcu-rom] Initializing I3C");
-        if straps.active_i3c == 1 {
-            caliptra_mcu_romtime::println!("[mcu-rom] Initializing I3C1 (active)");
-            i3c1.configure(crate::I3cConfig {
-                static_addr: straps.i3c1_static_addr,
-                recovery_enabled: true,
-                dcr: crate::i3c::MCTP_DCR,
-                timings: params.i3c1_timings.unwrap_or_default(),
-            });
+        if params.usb_recovery_boot {
+            caliptra_mcu_romtime::println!(
+                "[mcu-rom] Skipping I3C initialization for USB recovery"
+            );
         } else {
-            i3c.configure(crate::I3cConfig {
-                static_addr: straps.i3c_static_addr,
-                recovery_enabled: true,
-                dcr: crate::i3c::MCTP_DCR,
-                timings: params.i3c_timings.unwrap_or_default(),
-            });
+            caliptra_mcu_romtime::println!("[mcu-rom] Initializing I3C");
+            if straps.active_i3c == 1 {
+                caliptra_mcu_romtime::println!("[mcu-rom] Initializing I3C1 (active)");
+                i3c1.configure(crate::I3cConfig {
+                    static_addr: straps.i3c1_static_addr,
+                    recovery_enabled: true,
+                    dcr: crate::i3c::MCTP_DCR,
+                    timings: params.i3c1_timings.unwrap_or_default(),
+                });
+            } else {
+                i3c.configure(crate::I3cConfig {
+                    static_addr: straps.i3c_static_addr,
+                    recovery_enabled: true,
+                    dcr: crate::i3c::MCTP_DCR,
+                    timings: params.i3c_timings.unwrap_or_default(),
+                });
+            }
         }
         mci.set_flow_checkpoint(McuRomBootStatus::I3cInitialized.into());
 
@@ -1309,7 +1328,7 @@ impl BootFlow for ColdBoot {
             dma_user: params.cptra_dma_axi_user,
         });
         // HTG940_RECOVERY_DMA_USER_ALIGNMENT
-        if params.request_recovery_boot {
+        if params.request_recovery_boot || params.usb_recovery_boot {
             let sram_user = mci.registers.mci_reg_mcu_sram_config_axi_user.get();
             caliptra_mcu_romtime::println!(
                 "[mcu-rom] Recovery DMA user: configured={}, SRAM-authorized={}",
@@ -1701,7 +1720,7 @@ impl BootFlow for ColdBoot {
         mci.set_flow_milestone(McuBootMilestones::RI_DOWNLOAD_COMPLETED.into());
 
         // Loading images into the recovery flow is only possible in 2.1+.
-        if recovery_boot {
+        if mcu_managed_recovery_boot {
             if let Some(ref mut manager) = params.image_provider_manager {
                 caliptra_mcu_romtime::println!("[mcu-rom] Starting recovery flow");
                 mci.set_flow_checkpoint(McuRomBootStatus::FlashRecoveryFlowStarted.into());
@@ -1839,7 +1858,25 @@ impl BootFlow for ColdBoot {
 
         Self::report_field_entropy_state(&mut env.soc_manager, &env.otp);
 
-        if params.recovery_status_open {
+        if params.usb_recovery_boot {
+            let usb_regs = params.usb_recovery_regs.unwrap_or_else(|| {
+                fatal_error(McuError::ROM_COLD_BOOT_RECOVERY_NOT_CONFIGURED_ERROR)
+            });
+            if params.recovery_status_open {
+                caliptra_mcu_romtime::println!("[mcu-rom] Leaving USB recovery interface open");
+                usb_regs
+                    .recovery_recovery_status
+                    .write(UsbRecoveryStatus::DevRecStatus.val(2));
+            } else {
+                caliptra_mcu_romtime::println!("[mcu-rom] Disabling USB recovery interface");
+                usb_regs
+                    .recovery_recovery_status
+                    .write(UsbRecoveryStatus::DevRecStatus.val(3));
+                usb_regs
+                    .recovery_device_status_0
+                    .write(UsbDeviceStatus0::DevStatus.val(0));
+            }
+        } else if params.recovery_status_open {
             caliptra_mcu_romtime::println!("[mcu-rom] Leaving recovery interface open");
             if env.straps.active_i3c == 1 {
                 env.i3c1.set_recovery_status_open();
