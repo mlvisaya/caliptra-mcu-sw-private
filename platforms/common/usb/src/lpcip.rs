@@ -247,13 +247,14 @@ impl LpcipUsbDriver {
             .dev0_csr_ulpidebug
             .write(usb_combo::bits::UlpidebugT::PhyMode::SET);
 
+        self.verify_phy_scratch()?;
+
         let vendor_id = [self.ulpi_read(0x00)?, self.ulpi_read(0x01)?];
         let product_id = [self.ulpi_read(0x02)?, self.ulpi_read(0x03)?];
         if vendor_id != USB3320_VENDOR_ID || product_id != USB3320_PRODUCT_ID {
             return Err(LpcipUsbError::PhyIdentityMismatch);
         }
 
-        self.verify_phy_scratch()?;
         self.ulpi_write(USB3320_FUNCTION_CTRL, USB3320_HS_DEVICE_FUNCTION_CTRL)?;
         self.ulpi_write(USB3320_OTG_CTRL, 0)?;
         Ok(())
