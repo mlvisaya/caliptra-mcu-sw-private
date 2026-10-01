@@ -223,6 +223,14 @@ pub extern "C" fn rom_entry() -> ! {
                 core::hint::spin_loop();
             }
             let mut usb_driver = LpcipUsbDriver::new(usb_regs, usb_memory);
+            caliptra_mcu_romtime::println!("[usb-ulpi-test] Starting ULPIDEBUG test");
+            if let Err(error) = usb_driver.run_ulpi_debug_test() {
+                caliptra_mcu_romtime::println!("[usb-ulpi-test] FAILED: {:?}", error);
+                usb_driver.dump_registers();
+                caliptra_mcu_rom_common::fatal_error(
+                    caliptra_mcu_error::McuError::ROM_COLD_BOOT_RECOVERY_NOT_CONFIGURED_ERROR,
+                );
+            }
             let result = usb_driver.init_and_enumerate();
             usb_driver.dump_registers();
             if result.is_err() {
