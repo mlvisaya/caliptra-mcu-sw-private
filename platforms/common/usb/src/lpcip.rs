@@ -234,6 +234,170 @@ impl LpcipUsbDriver {
         }
     }
 
+    /// Run the FPGA bring-up register test through the LPCIP ULPIDEBUG gateway.
+    pub fn run_ulpi_debug_test(&self) -> Result<(), LpcipUsbError> {
+        const SCRATCH_PATTERNS: [u8; 12] = [
+            0x00, 0xff, 0xa5, 0x5a, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80,
+        ];
+
+        caliptra_mcu_romtime::println!(
+            "[usb-ulpi-test] Initial state: DEVCMDSTAT=0x{:08x} CONFIG=0x{:08x} CLKCTRL=0x{:08x} ULPIDEBUG=0x{:08x}",
+            self.regs.dev0_csr_devcmdstat.get(),
+            self.regs.dev0_csr_config.get(),
+            self.regs.dev0_csr_clkctrl.get(),
+            self.regs.dev0_csr_ulpidebug.get()
+        );
+        if !self
+            .regs
+            .dev0_csr_config
+            .is_set(usb_combo::bits::ConfigT::Ulpi)
+        {
+            caliptra_mcu_romtime::println!(
+                "[usb-ulpi-test] Controller does not advertise ULPI support"
+            );
+            return Err(LpcipUsbError::UnsupportedPhy);
+        }
+
+        self.regs.dev0_csr_devcmdstat.set(KEEP_PHY_CLOCK);
+        caliptra_mcu_romtime::println!(
+            "[usb-ulpi-test] Forced PHY clock: DEVCMDSTAT=0x{:08x}",
+            self.regs.dev0_csr_devcmdstat.get()
+        );
+        self.regs
+            .dev0_csr_ulpidebug
+            .write(usb_combo::bits::UlpidebugT::PhyMode::SET);
+        caliptra_mcu_romtime::println!(
+            "[usb-ulpi-test] Selected ULPI mode: ULPIDEBUG=0x{:08x}",
+            self.regs.dev0_csr_ulpidebug.get()
+        );
+
+        caliptra_mcu_romtime::println!("[usb-ulpi-test] Reading USB3320 identity");
+        let vendor_id = [
+            self.ulpi_debug_test_read(0x00)?,
+            self.ulpi_debug_test_read(0x01)?,
+        ];
+        let product_id = [
+            self.ulpi_debug_test_read(0x02)?,
+            self.ulpi_debug_test_read(0x03)?,
+        ];
+        caliptra_mcu_romtime::println!(
+            "[usb-ulpi-test] Vendor ID: 0x{:02x}{:02x}",
+            vendor_id[1],
+            vendor_id[0]
+        );
+        caliptra_mcu_romtime::println!(
+            "[usb-ulpi-test] Product ID: 0x{:02x}{:02x}",
+            product_id[1],
+            product_id[0]
+        );
+        if vendor_id != USB3320_VENDOR_ID || product_id != USB3320_PRODUCT_ID {
+            caliptra_mcu_romtime::println!(
+                "[usb-ulpi-test] Identity mismatch: expected vendor=0x0424 product=0x0007"
+            );
+            return Err(LpcipUsbError::PhyIdentityMismatch);
+        }
+
+        caliptra_mcu_romtime::println!("[usb-ulpi-test] Reading original scratch value");
+        let original_scratch = self.ulpi_debug_test_read(USB3320_SCRATCH)?;
+        caliptra_mcu_romtime::println!(
+            "[usb-ulpi-test] Original scratch: 0x{:02x}",
+            original_scratch
+        );
+
+        let test_result: Result<(), LpcipUsbError> = (|| {
+            for pattern in SCRATCH_PATTERNS {
+                caliptra_mcu_romtime::println!(
+                    "[usb-ulpi-test] Testing scratch pattern 0x{:02x}",
+                    pattern
+                );
+                self.ulpi_debug_test_write(USB3320_SCRATCH, pattern)?;
+                let actual = self.ulpi_debug_test_read(USB3320_SCRATCH)?;
+                caliptra_mcu_romtime::println!(
+                    "[usb-ulpi-test] Scratch write=0x{:02x} read=0x{:02x}",
+                    pattern,
+                    actual
+                );
+                if actual != pattern {
+                    caliptra_mcu_romtime::println!(
+                        "[usb-ulpi-test] Scratch mismatch at pattern 0x{:02x}",
+                        pattern
+                    );
+                    return Err(LpcipUsbError::PhyScratchMismatch);
+                }
+            }
+            Ok(())
+        })();
+
+        caliptra_mcu_romtime::println!(
+            "[usb-ulpi-test] Restoring scratch to 0x{:02x}",
+            original_scratch
+        );
+        let restore_result = self.ulpi_debug_test_write(USB3320_SCRATCH, original_scratch);
+        test_result?;
+        restore_result?;
+
+        caliptra_mcu_romtime::println!("[usb-ulpi-test] PASS");
+        Ok(())
+    }
+
+    fn ulpi_debug_test_read(&self, address: u8) -> Result<u8, LpcipUsbError> {
+        caliptra_mcu_romtime::println!(
+            "[usb-ulpi-test] READ  addr=0x{:02x} before=0x{:08x}",
+            address,
+            self.regs.dev0_csr_ulpidebug.get()
+        );
+        match self.ulpi_read(address) {
+            Ok(value) => {
+                caliptra_mcu_romtime::println!(
+                    "[usb-ulpi-test] READ  addr=0x{:02x} value=0x{:02x} after=0x{:08x}",
+                    address,
+                    value,
+                    self.regs.dev0_csr_ulpidebug.get()
+                );
+                Ok(value)
+            }
+            Err(error) => {
+                caliptra_mcu_romtime::println!(
+                    "[usb-ulpi-test] READ  addr=0x{:02x} failed={:?} pending=0x{:08x}",
+                    address,
+                    error,
+                    self.regs.dev0_csr_ulpidebug.get()
+                );
+                Err(error)
+            }
+        }
+    }
+
+    fn ulpi_debug_test_write(&self, address: u8, value: u8) -> Result<(), LpcipUsbError> {
+        caliptra_mcu_romtime::println!(
+            "[usb-ulpi-test] WRITE addr=0x{:02x} value=0x{:02x} before=0x{:08x}",
+            address,
+            value,
+            self.regs.dev0_csr_ulpidebug.get()
+        );
+        match self.ulpi_write(address, value) {
+            Ok(()) => {
+                caliptra_mcu_romtime::println!(
+                    "[usb-ulpi-test] WRITE addr=0x{:02x} value=0x{:02x} after=0x{:08x}",
+                    address,
+                    value,
+                    self.regs.dev0_csr_ulpidebug.get()
+                );
+                Ok(())
+            }
+            Err(error) => {
+                caliptra_mcu_romtime::println!(
+                    "[usb-ulpi-test] WRITE addr=0x{:02x} value=0x{:02x} failed={:?} pending=0x{:08x}",
+                    address,
+                    value,
+                    error,
+                    self.regs.dev0_csr_ulpidebug.get()
+                );
+                Err(error)
+            }
+        }
+    }
+
     fn initialize_phy(&self) -> Result<(), LpcipUsbError> {
         if !self
             .regs

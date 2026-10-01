@@ -24,6 +24,7 @@ struct Args {
 
 fn main() -> Result<()> {
     let args = Args::parse();
+    eprintln!("[usb-recovery] Loading recovery images");
     let caliptra_fmc_rt = std::fs::read(&args.caliptra_fmc_rt)
         .with_context(|| format!("failed to read {}", args.caliptra_fmc_rt.display()))?;
     let soc_manifest = std::fs::read(&args.soc_manifest)
@@ -35,7 +36,14 @@ fn main() -> Result<()> {
         soc_manifest: &soc_manifest,
         mcu_runtime: &mcu_runtime,
     };
+    eprintln!(
+        "[usb-recovery] Opening USB device {:04x}:{:04x}",
+        args.vendor_id, args.product_id
+    );
     let transport =
         LibusbTransport::open(args.vendor_id, args.product_id, Duration::from_secs(10))?;
-    RecoveryAgent::new(transport).run(&images)
+    eprintln!("[usb-recovery] USB interface claimed");
+    RecoveryAgent::new(transport).run(&images)?;
+    eprintln!("[usb-recovery] Done");
+    Ok(())
 }
