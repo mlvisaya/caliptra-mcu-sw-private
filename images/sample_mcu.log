@@ -1,0 +1,446 @@
+[MCI] Registering outgoing events
+[MCI] Registering outgoing events
+Using hardware-model ModelEmulated
+InitParamsSummary {
+    rom_sha384: "8459f5ca53931c69ab71aca9a98451a0c3357e284f97560903469b46a66812e084834f059ab3254525532541aba93ec9",
+    obf_key: [0xa0a1a2a3, 0xb0b1b2b3, 0xc0c1c2c3, 0xd0d1d2d3, 0xe0e1e2e3, 0xf0f1f2f3, 0xa4a5a6a7, 0xb4b5b6b7],
+}
+          0 UART: [mcu-rom] Built 2026-10-01T05:44:12Z
+          0 UART: [usb] Disconnecting and initializing Device 0
+          0 UART: [usb] Initializing USB3320 PHY
+          0 UART: [usb] Waiting for VBUS
+          0 UART: [usb] Enabling Device 0 interrupts
+          0 UART: [usb] Connecting Device 0
+          0 UART: [usb] Waiting for USB bus reset
+          0 UART: [usb] Servicing EP0 enumeration requests
+
+Running Caliptra ROM ...
+
+[state] WD Timer not started. Device not locked for debugging
+[kat] AES-GCM
+[kat] KDF-CMAC
+[state] LifecycleState = Production
+[state] DebugLocked = No
+[state] WD Timer not started. Device not locked for debugging
+[kat] SHA2-256
+          0 UART: [mcu-rom] Booting with USB recovery
+          0 UART: [mcu-rom] Hello from ROM
+          0 UART: [mcu-rom] Device lifecycle: Production
+          0 UART: [mcu-rom] MCI generic input wires[0]: 00000000
+          0 UART: [mcu-rom] MCI generic input wires[1]: 20000000
+          0 UART: [mcu-rom] MCI RESET_REASON: 0x00000000
+          0 UART: [mcu-rom] Cold boot detected
+          0 UART: [mcu-rom] Starting cold boot flow at time 1389330
+          0 UART: [mcu-rom] Active I3C core for recovery: 0
+          0 UART: [mcu-rom] Recovery interface selection: 0 (0=USB, 1=I3C)
+          0 UART: [mcu-rom] Setting Caliptra boot go
+          0 UART: [mcu-lcc] Initializing Lifecycle controller...
+          0 UART: [mcu-lcc] Lifecycle state: 00000000 (count 0)
+          0 UART: Lifecycle controller initialization done
+          0 UART: [mcu-rom-otp] Initializing OTP controller...
+          0 UART: [mcu-rom-otp] Setting check timeout to 1048576
+          0 UART: [mcu-rom-otp] Disabling check modifications
+          0 UART: [mcu-rom-otp] Done init
+          0 UART: [mcu-rom] OTP initialized
+          0 UART: [mcu-rom] Configuring Caliptra watchdog timers for recovery boot: 4294967295 4294967295
+          0 UART: [mcu-rom] Skipping I3C initialization for USB recovery
+          0 UART: [mcu-rom] Waiting for Caliptra to be ready for fuses: true
+          0 UART: [mcu-rom] Writing fuses to Caliptra
+          0 UART: [mcu-rom] Setting Caliptra mailbox user 0 to CCCCCCCC
+          0 UART: [mcu-rom] Locking Caliptra mailbox user 0
+          0 UART: [mcu-rom] Setting Caliptra mailbox user 1 to DDDDDDDD
+          0 UART: [mcu-rom] Locking Caliptra mailbox user 1
+          0 UART: [mcu-rom] Setting fuse user
+          0 UART: [mcu-rom] Locking fuse user
+          0 UART: [mcu-rom] Setting TRNG user
+          0 UART: [mcu-rom] Locking TRNG user
+          0 UART: [mcu-rom] Setting DMA user
+          0 UART: [mcu-rom] Recovery DMA user: configured=3435973836, SRAM-authorized=0
+          0 UART: [mcu-rom] Recovery DMA user programmed to 0
+          0 UART: [mcu-rom] Populating fuses
+          0 UART: [mcu-fuse-write] Setting UDS/FE DAI idle bit offset to 30, OTP status reg offset to 16, and direct access cmd reg offset to 128
+          0 UART: [mcu-fuse-write] Selected vendor PK slot 0
+          0 UART: [mcu-fuse-write] Setting vendor PQC type to 3
+
+USB recovery device is ready. Run this command in another terminal:
+
+/home/visayamv/projects/caliptra-mcu-sw/target/debug/caliptra-mcu-usb-recovery --caliptra-fmc-rt /tmp/.tmpSsHgIC/caliptra-fmc-rt.bin --soc-manifest /tmp/.tmpSsHgIC/soc-manifest.bin --mcu-runtime /tmp/.tmpSsHgIC/mcu-runtime.bin
+
+          0 UART: [mcu-fuse-write] Setting prod debug unlock PK hash bank offset to 480, count 8
+          0 UART: [mcu-rom] Writing handoff table (size 260) to DCCM at 0x50003800
+          0 UART: [mcu-rom] Configuring MCU mailbox AXI users
+          0 UART: [mcu-rom] Setting MCI mailbox 0 user 0 to CCCCCCCC
+          0 UART: [mcu-rom] Setting MCI mailbox 0 user 1 to DDDDDDDD
+          0 UART: [mcu-rom] Setting MCI mailbox 1 user 0 to CCCCCCCC
+          0 UART: [mcu-rom] Setting MCI mailbox 1 user 1 to DDDDDDDD
+          0 UART: [mcu-rom] Setting SS_CONFIG_DONE_STICKY to lock configuration
+          0 UART: [mcu-rom] Setting SS_CONFIG_DONE
+          0 UART: [mcu-rom] Verifying production debug unlock PK hashes
+          0 UART: [mcu-rom] Prod debug unlock PK hash verification passed
+          0 UART: [mcu-rom] Verifying MCU mailbox AXI users
+          0 UART: [mcu-rom] MCU mailbox AXI user verification passed
+          0 UART: [mcu-rom] Setting Caliptra fuse write done
+          0 UART: [mcu-rom] Waiting for Caliptra Core boot FSM to be DONE
+          0 UART: [mcu-rom] Waiting for Caliptra to be ready for mbox
+ROM Digest: 030D1160CBB434825A1481A9CAF6B92EBA6D1C5935AAEDE1CE2BF6428F1E5FE2
+[kat] ++
+[kat] sha1
+[kat] SHA2-256
+[kat] SHA2-384
+[kat] SHA2-512
+[kat] SHA2-512-ACC
+[kat] SHAKE-256
+[kat] CSRNG
+[kat] ECC-384
+[kat] ECDH
+[kat] HMAC-384Kdf
+[kat] HMAC-512Kdf
+[kat] HKDF-384
+[kat] HKDF-512
+[kat] AES-GCM
+[kat] KDF-CMAC
+[kat] LMS
+[kat] MLDSA87
+[kat][mldsa] keygen + PCT start
+[mldsa] wait keygen-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done keygen-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] start keygen-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done keygen-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait keygen-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done keygen-valid status=0x00000003 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] start sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000003 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait verify-ready status=0x00000002 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done verify-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000013 error_global=0x00000000 error_internal=0x00000000
+[kat][mldsa] public-key digest start
+[kat][mldsa] public-key digest complete
+[kat][mldsa] private-key digest start
+[kat][mldsa] private-key digest complete
+[kat][mldsa] keygen + PCT complete
+[kat][mldsa] sign + verify start
+[mldsa] wait sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] start sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000003 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait verify-ready status=0x00000002 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done verify-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000013 error_global=0x00000000 error_internal=0x00000000
+[kat][mldsa] signature digest start
+[kat][mldsa] signature digest complete
+[kat][mldsa] sign + verify complete
+[kat][mldsa] standalone verify start
+[mldsa] wait verify-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done verify-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000013 error_global=0x00000000 error_internal=0x00000000
+[kat][mldsa] standalone verify complete
+[kat] --
+[cold-reset] ++
+[idev] ++
+[idev] CDI.KEYID = 6
+[idev] ECC SUBJECT.KEYID = 7, MLDSA SUBJECT.KEYID = 8
+[idev] UDS.KEYID = 0
+          0 UART: [mcu-rom] Caliptra is ready for mailbox commands
+[idev] Erasing UDS.KEYID = 0
+[mldsa] wait keygen-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done keygen-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] start keygen-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done keygen-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait keygen-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done keygen-valid status=0x00000003 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] start sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000003 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait verify-ready status=0x00000002 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done verify-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000013 error_global=0x00000000 error_internal=0x00000000
+[idev] Sha1 KeyId Algorithm
+[idev] Sha1 KeyId Algorithm
+[idev] --
+[ldev] ++
+[ldev] CDI.KEYID = 6
+[ldev] ECC SUBJECT.KEYID = 5, MLDSA SUBJECT.KEYID = 4
+[ldev] ECC AUTHORITY.KEYID = 7, MLDSA AUTHORITY.KEYID = 8
+[ldev] FE.KEYID = 1
+[ldev] Deriving DOT_STABLE_IDEV.KEYID = 0
+[ldev] Erasing FE.KEYID = 1
+[ldev] Deriving DOT_STABLE_LDEV.KEYID = 1
+[mldsa] wait keygen-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done keygen-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] start keygen-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done keygen-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait keygen-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done keygen-valid status=0x00000003 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] start sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000003 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait verify-ready status=0x00000002 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done verify-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000013 error_global=0x00000000 error_internal=0x00000000
+[ldev] Signing Cert ECC AUTHORITY.KEYID = 7
+[ldev] Signing Cert MLDSA AUTHORITY.KEYID = 8
+[mldsa] wait sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] start sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000003 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait verify-ready status=0x00000002 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done verify-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000013 error_global=0x00000000 error_internal=0x00000000
+[ldev] --
+[fwproc] Wait for Commands...
+[fwproc] Recv command 0x434d5247
+[fwproc] Recv command 0x434d5247
+[fwproc] Recv command 0x434d5247
+          0 UART: [mcu-rom] Sending RI_DOWNLOAD_FIRMWARE command
+[fwproc] Recv command 0x52494644
+[fwproc] Completing RI_DOWNLOAD_FIRMWARE command
+[fwproc] Downloading image           0 UART: [mcu-rom] Waiting for MCU firmware to be ready
+from RRI to MCU SRAM
+[dma-recovery] Requesting recovery image 0
+[dma-recovery] Set device status 3
+test usb::tests::usbip_linux_libusb_lpcip_manual_recovery_boot has been running for over 60 seconds
+[dma-recovery] Payload available, 226560 bytes
+[fwproc] Received image from the Recovery Interface of size 226560 bytes
+[fwproc] Setting device recovery status to 0x1, image index 0x1, device status 0x3
+[fwproc] Img verified ecc=0 LMS=0 svn=0 fuse_svn=0
+[fwproc] Load FMC at address 0x40000000 len 31588
+[fwproc] Load Runtime at address 0x40008000 len 177828
+[fwproc] Initializing chain, length 128 (max 128)
+[fwproc] Chain initialized
+[afmc] ++
+[mldsa] wait keygen-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done keygen-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] start keygen-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done keygen-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait keygen-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done keygen-valid status=0x00000003 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] start sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000003 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait verify-ready status=0x00000002 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done verify-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000013 error_global=0x00000000 error_internal=0x00000000
+[afmc] Signing Cert ECC AUTHORITY.KEYID = 5
+[afmc] Signing Cert MLDSA AUTHORITY.KEYID = 4
+[mldsa] wait sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] start sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000003 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait verify-ready status=0x00000002 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done verify-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000013 error_global=0x00000000 error_internal=0x00000000
+[afmc] --
+[cold-reset] --
+[state] Locking Datavault
+[exit] Launching FMC @ 0x40000130
+
+Running Caliptra FMC ...
+
+[state] CFI Enabled
+[fht] FMC Alias ECC Private Key: 7
+[fht] FMC Alias MLDSA Key Pair Seed KV Slot: 8
+[mldsa] wait sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] start sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000003 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait verify-ready status=0x00000002 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done verify-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000013 error_global=0x00000000 error_internal=0x00000000
+[alias rt] Extend RT PCRs
+[alias rt] Extend RT PCRs Done
+[alias rt] Lock RT PCRs
+[alias rt] Lock RT PCRs Done
+[fht] FMC Alias ECC Private Key: 7
+[fht] FMC Alias MLDSA Key Pair Seed KV Slot: 8
+[alias rt] Derive CDI
+[alias rt] Store it in slot 0x4
+[alias rt] Derive Key Pair
+[alias rt] Store ECC priv key in slot 0x5 and MLDSA key pair seed in slot 0x9
+[mldsa] wait keygen-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done keygen-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] start keygen-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done keygen-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait keygen-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done keygen-valid status=0x00000003 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] start sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000003 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait verify-ready status=0x00000002 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done verify-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000013 error_global=0x00000000 error_internal=0x00000000
+[alias rt] Derive Key Pair - Done
+[alias rt] Signing ECC Cert with AUTHORITY.KEYID = 7
+[alias rt] Locking ECC AUTHORITY.KEYID = 7 & FMC CDI = 6
+[alias rt] ECC PUB.X = 0532F7F70E20A3C5327302C00A5467AFA7D0F1B30D159F77B35134251636D810434A74D81F0655AE3C7E7723553A2B67
+[alias rt] ECC PUB.Y = 47EA5B558E6F47E3D0D936100AA76C91FF16E1920A095322FB7E0EBDD3E96D53CB84DE9A898CF015CF6B64F9C4D508E1
+[alias rt] ECC SIG.R = F6ACF583D81CED4980AADEBC7805AE2B902422767D6964938CEACCB809D80738539171C1A266F38669B46BF54716423D
+[alias rt] ECC SIG.S = D8D201D22D8F9A01C3E03A1CD3D12703CC486E36C31CCD7C1EB62E23981FA425A66721A307B71C478BCE09D199A0C1AF
+[alias rt] Signing MLDSA Cert with AUTHORITY.KEYID = 8
+[mldsa] wait sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] start sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done sign-var-entropy status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000003 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait verify-ready status=0x00000002 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done verify-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000013 error_global=0x00000000 error_internal=0x00000000
+[alias rt] Locking MLDSA AUTHORITY.KEYID = 8 & FMC CDI = 6
+[mldsa] wait verify-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done verify-ready status=0x00000001 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-ready status=0x00000004 error_global=0x00000000 error_internal=0x00000000
+[mldsa] wait stream-valid status=0x00000000 error_global=0x00000000 error_internal=0x00000000
+[mldsa] done stream-valid status=0x00000013 error_global=0x00000000 error_internal=0x00000000
+Caliptra RT
+[kat] AES-ECB
+[kat] AES-CBC
+[kat] AES-CTR
+[kat] AES-CMAC
+[kat] MLKEM1024
+[rt] OCP LOCK Unsupported
+[dma-recovery] Requesting recovery image 1
+[dma-recovery] Set device status 3
+[dma-recovery] Payload available, 30696 bytes
+[dma-recovery] Waiting for activation
+[dma-recovery] Requesting recovery image 2
+[dma-recovery] Set device status 3
+[dma-recovery] Payload available, 133888 bytes
+[rt] Verifying MCU digest: 96399673EBB0CBA144B2518E21D95CFADE553ED56B89574510EA27AAE0422159D805B2AC2439094725238A90E154EA5F
+          0 UART: [mcu-rom] Firmware is ready
+[          0 UART: [mcu-rom] Firmware load detected
+rt] Disable entropy source
+[rt] RT lis          0 UART: [mcu-rom] Waiting for Caliptra RT to be ready for runtime mailbox commands
+tening for mailbox commands...
+          0 UART: [mcu-fuse-write] Locking vendor PK hash slots from index 0
+[rt] Received command=0x434d5349 (CMSI), len=4108
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5355 (CMSU), len=4304
+[rt] Received command=0x434d5346 (CMSF), len=4304
+          0 UART: [mcu-rom] MCU ROM digest: 667F99A848CA971CEB69C5E39E83B1BB14FE8C43BFBD04D0E3D63853E9808B056D65A8DD2760EE6EE7E83FFBDE8E6F5B
+          0 UART: [mcu-rom] MCU ROM expected digest: 667F99A848CA971CEB69C5E39E83B1BB14FE8C43BFBD04D0E3D63853E9808B056D65A8DD2760EE6EE7E83FFBDE8E6F5B
+          0 UART: [mcu-rom] Finished boot-mode-specific initialization
+[rt] Received command=0x434d5349 (CMSI), len=4108
+[rt] Received command=0x434d5346 (CMSF), len=4304
+[rt] Received command=0x4d454153 (MEAS), len=108
+          0 UART: [mcu-rom] Disabling USB recovery interface
+          0 UART: [mcu-rom] Resetting to boot firmware
+MCI: MCU reset requested
+MCI: MCU proceeding with reboot
+          0 UART: [mcu-rom] Built 2026-10-01T05:44:12Z
+          0 UART: [mcu-rom] Booting with USB recovery
+          0 UART: [mcu-rom] Hello from ROM
+          0 UART: [mcu-rom] Device lifecycle: Production
+          0 UART: [mcu-rom] MCI generic input wires[0]: 00000000
+          0 UART: [mcu-rom] MCI generic input wires[1]: 20000000
+          0 UART: [mcu-rom] MCI RESET_REASON: 0x00000002
+          0 UART: [mcu-rom] Firmware boot reset detected
+          0 UART: [mcu-rom] Starting fw boot reset flow
+          0 UART: [mcu-rom] Jumping to firmware
+USB recovery completed; MCU firmware boot flow is complete

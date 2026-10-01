@@ -1,0 +1,32 @@
+visayamv@DESKTOP-4VTMK3G:~/projects/caliptra-mcu-sw$ cd emulator/bmc/
+
+
+visayamv@DESKTOP-4VTMK3G:~/projects/caliptra-mcu-sw/emulator/bmc$ echo "Look for PID/VID of Caliptra USB device"
+Look for PID/VID of Caliptra USB device
+
+
+visayamv@DESKTOP-4VTMK3G:~/projects/caliptra-mcu-sw/emulator/bmc$ lsusb
+Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
+Bus 001 Device 010: ID 1209:0001 Generic pid.codes Test PID
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+
+visayamv@DESKTOP-4VTMK3G:~/projects/caliptra-mcu-sw/emulator/bmc$ cargo run -p caliptra-mcu-usb-recovery -- --caliptra-fmc-rt caliptra_fw.bin --soc-manifest soc_manifest.bin --mcu-runtime mcu_runtime.bin --vendor-id 4617 --product-id 1
+[usb-recovery] Loading recovery images
+[usb-recovery] Opening USB device 1209:0001
+[usb-recovery] USB interface claimed
+[usb-recovery] Checking device capabilities
+[usb-recovery] Device supports status reporting and FIFO CMS
+[usb-recovery] Waiting for recovery mode
+[usb-recovery] Device entered recovery mode
+[usb-recovery] Initializing recovery control
+[usb-recovery] Sending image 0: Caliptra FMC/runtime (226560 bytes)
+[usb-recovery] Image 0 transferred; waiting for device processing
+[usb-recovery] Activating image 0
+[usb-recovery] Sending image 1: SoC manifest (30696 bytes)
+[usb-recovery] Image 1 transferred; waiting for device processing
+[usb-recovery] Activating image 1
+[usb-recovery] Sending image 2: MCU runtime (133888 bytes)
+[usb-recovery] Image 2 transferred; waiting for device processing
+[usb-recovery] Activating image 2
+[usb-recovery] All recovery images transferred and activated
+[usb-recovery] Done
