@@ -720,13 +720,20 @@ mod tests {
                     .arg(mcu_runtime)
                     .output()
                     .map_err(|error| format!("failed to launch USB recovery agent: {error}"))?;
-                if !output.status.success() {
-                    return Err(format!(
-                        "USB recovery agent exited with {}\nstdout:\n{}\nstderr:\n{}",
-                        output.status,
-                        String::from_utf8_lossy(&output.stdout),
+                if !output.stdout.is_empty() {
+                    eprintln!(
+                        "USB recovery agent stdout:\n{}",
+                        String::from_utf8_lossy(&output.stdout)
+                    );
+                }
+                if !output.stderr.is_empty() {
+                    eprintln!(
+                        "USB recovery agent stderr:\n{}",
                         String::from_utf8_lossy(&output.stderr)
-                    ));
+                    );
+                }
+                if !output.status.success() {
+                    return Err(format!("USB recovery agent exited with {}", output.status));
                 }
                 Ok(())
             })()

@@ -94,6 +94,15 @@ impl RecoveryImages<'_> {
             _ => bail!("device requested unsupported recovery image index {index}"),
         }
     }
+
+    fn name(index: u8) -> &'static str {
+        match index {
+            0 => "Caliptra FMC/runtime",
+            1 => "SoC manifest",
+            2 => "MCU runtime",
+            _ => "unknown image",
+        }
+    }
 }
 
 pub struct RecoveryAgent<T> {
@@ -114,12 +123,17 @@ impl<T: RecoveryTransport> RecoveryAgent<T> {
     }
 
     pub fn run(&mut self, images: &RecoveryImages<'_>) -> Result<()> {
+        eprintln!("[usb-recovery] Checking device capabilities");
         self.check_capabilities()?;
+        eprintln!("[usb-recovery] Waiting for recovery mode");
         let startup_deadline = Instant::now() + self.state_timeout;
         loop {
             match self.device_status()? {
                 DeviceStatusValue::RecoveryMode => break,
-                DeviceStatusValue::RunningRecoveryImage => return Ok(()),
+                DeviceStatusValue::RunningRecoveryImage => {
+                    eprintln!("[usb-recovery] Device is already running the recovery image");
+                    return Ok(());
+                }
                 DeviceStatusValue::StatusPending | DeviceStatusValue::DeviceHealthy => {
                     ensure!(
                         Instant::now() < startup_deadline,
@@ -131,6 +145,8 @@ impl<T: RecoveryTransport> RecoveryAgent<T> {
             }
         }
 
+        eprintln!("[usb-recovery] Device entered recovery mode");
+        eprintln!("[usb-recovery] Initializing recovery control");
         self.transport
             .write(RecoveryCommand::RecoveryCtrl, &[0, 0, 0])?;
 
@@ -143,7 +159,8 @@ impl<T: RecoveryTransport> RecoveryAgent<T> {
             );
             match self.device_status()? {
                 DeviceStatusValue::DeviceHealthy | DeviceStatusValue::RunningRecoveryImage => {
-                    return Ok(())
+                    eprintln!("[usb-recovery] Recovery completed successfully");
+                    return Ok(());
                 }
                 DeviceStatusValue::RecoveryMode | DeviceStatusValue::RecoveryPending => {}
                 status => bail!("recovery failed with device status {status:?}"),
@@ -157,12 +174,25 @@ impl<T: RecoveryTransport> RecoveryAgent<T> {
                         thread::sleep(self.poll_interval);
                         continue;
                     }
+                    let image_name = RecoveryImages::name(image_index);
+                    eprintln!(
+                        "[usb-recovery] Sending image {}: {} ({} bytes)",
+                        image_index,
+                        image_name,
+                        image.len()
+                    );
                     self.send_fifo_image(image)?;
                     sent[image_index as usize] = true;
+                    eprintln!(
+                        "[usb-recovery] Image {} transferred; waiting for device processing",
+                        image_index
+                    );
                     self.wait_for_recovery_pending()?;
+                    eprintln!("[usb-recovery] Activating image {}", image_index);
                     self.transport
                         .write(RecoveryCommand::RecoveryCtrl, &[self.cms, 0, 0x0f])?;
                     if sent.iter().all(|sent| *sent) {
+                        eprintln!("[usb-recovery] All recovery images transferred and activated");
                         return Ok(());
                     }
                     progress_deadline = Instant::now() + self.state_timeout;
@@ -191,6 +221,7 @@ impl<T: RecoveryTransport> RecoveryAgent<T> {
             "DEVICE_STATUS is not supported"
         );
         ensure!(capabilities & (1 << 12) != 0, "FIFO CMS is not supported");
+        eprintln!("[usb-recovery] Device supports status reporting and FIFO CMS");
         Ok(())
     }
 
