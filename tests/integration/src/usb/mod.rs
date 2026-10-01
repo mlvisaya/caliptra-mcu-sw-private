@@ -769,6 +769,110 @@ mod tests {
         lock.fetch_add(1, Ordering::Relaxed);
     }
 
+    /// Keep the LPCIP USB/IP recovery device running while the recovery agent
+    /// is launched manually from another terminal.
+    #[cfg(all(target_os = "linux", not(feature = "fpga_realtime")))]
+    #[test]
+    #[ignore = "requires launching the printed recovery-agent command manually"]
+    fn usbip_linux_libusb_lpcip_manual_recovery_boot() {
+        let lock = TEST_LOCK.lock().unwrap();
+        let _usbip_lock = USBIP_TEST_LOCK.lock().unwrap();
+
+        if !linux_usbip_prerequisites_available() {
+            return;
+        }
+
+        let params = TestParams {
+            rom_feature: Some("test-lpcip-usb-ocp-recovery"),
+            i3c_port: Some(PortPicker::new().pick().unwrap()),
+            flash_boot: true,
+            usb_recovery: true,
+            rom_only: true,
+            ..Default::default()
+        };
+        let bins = build_test_binaries(&params);
+        let image_dir = tempfile::tempdir().expect("failed to create recovery image directory");
+        let caliptra_fmc_rt = image_dir.path().join("caliptra-fmc-rt.bin");
+        let soc_manifest = image_dir.path().join("soc-manifest.bin");
+        let mcu_runtime = image_dir.path().join("mcu-runtime.bin");
+        std::fs::write(&caliptra_fmc_rt, &bins.caliptra_fw)
+            .expect("failed to write Caliptra recovery image");
+        std::fs::write(&soc_manifest, &bins.soc_manifest)
+            .expect("failed to write SoC manifest recovery image");
+        std::fs::write(&mcu_runtime, &bins.mcu_runtime)
+            .expect("failed to write MCU runtime recovery image");
+        let recovery_agent = build_usb_recovery_agent();
+        let mut hw = start_runtime_hw_model(TestParams {
+            custom_mcu_rom: Some(bins.mcu_rom),
+            ..params
+        });
+        let host = hw.lpcip_usb_host_controller.clone();
+        let recovery_host = Some(hw.usb_recovery_host.clone());
+
+        for _ in 0..50_000_000 {
+            hw.step();
+            if host.device_enabled() {
+                break;
+            }
+        }
+        assert!(
+            host.device_enabled(),
+            "firmware did not enable LPCIP USB device"
+        );
+        host.bus_reset();
+
+        let listener =
+            TcpListener::bind(("127.0.0.1", 3240)).expect("USB/IP TCP port 3240 must be available");
+        let config = UsbIpServerConfig::new("1-2", 1, 2, 0x1209, 0x0001);
+        let server_thread = std::thread::spawn(move || {
+            UsbIpServer::new(
+                listener,
+                config,
+                HwModelUsbDevice::new_lpcip(host, recovery_host),
+            )
+            .serve_until_disconnect()
+        });
+
+        let attach_thread = std::thread::spawn(|| {
+            attach_usbip_device()?;
+            grant_libusb_access(0x1209, 0x0001).map_err(|error| error.to_string())
+        });
+        while !attach_thread.is_finished() {
+            hw.step();
+            std::thread::yield_now();
+        }
+        attach_thread
+            .join()
+            .unwrap()
+            .unwrap_or_else(|error| panic!("failed to prepare USB recovery device: {error}"));
+
+        eprintln!(
+            "\nUSB recovery device is ready. Run this command in another terminal:\n\n\
+             {} --caliptra-fmc-rt {} --soc-manifest {} --mcu-runtime {}\n",
+            recovery_agent.display(),
+            caliptra_fmc_rt.display(),
+            soc_manifest.display(),
+            mcu_runtime.display(),
+        );
+
+        let mut steps = 0_u64;
+        while !hw
+            .mci_boot_milestones()
+            .contains(McuBootMilestones::FIRMWARE_BOOT_FLOW_COMPLETE)
+        {
+            hw.step();
+            steps += 1;
+            if steps % 1_000 == 0 {
+                std::thread::yield_now();
+            }
+        }
+
+        eprintln!("USB recovery completed; MCU firmware boot flow is complete");
+        detach_usbip_device().unwrap();
+        server_thread.join().unwrap().unwrap();
+        lock.fetch_add(1, Ordering::Relaxed);
+    }
+
     #[cfg(target_os = "linux")]
     fn build_usb_recovery_agent() -> PathBuf {
         let workspace = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
