@@ -197,7 +197,7 @@ mod tests {
 
         let listener = TcpListener::bind(("127.0.0.1", 0)).unwrap();
         let server_address = listener.local_addr().unwrap();
-        let config = UsbIpServerConfig::new("1-2", 1, 2, 0x1209, 0x0001);
+        let config = UsbIpServerConfig::new("1-2", 1, 2, 0x0424, 0x0007);
         let server_thread = std::thread::spawn(move || {
             let result = UsbIpServer::new(
                 listener,
@@ -227,7 +227,7 @@ mod tests {
                 &[],
                 18,
             );
-            assert_eq!(&device_descriptor[8..12], &[0x09, 0x12, 0x01, 0x00]);
+            assert_eq!(&device_descriptor[8..12], &[0x24, 0x04, 0x07, 0x00]);
             submit_control(
                 &mut host,
                 2,
@@ -505,7 +505,7 @@ mod tests {
 
         let listener =
             TcpListener::bind(("127.0.0.1", 3240)).expect("USB/IP TCP port 3240 must be available");
-        let config = UsbIpServerConfig::new("1-2", 1, 2, 0x1209, 0x0001);
+        let config = UsbIpServerConfig::new("1-2", 1, 2, 0x0424, 0x0007);
         let server_thread = std::thread::spawn(move || {
             UsbIpServer::new(listener, config, HwModelUsbDevice::new(host, recovery_host))
                 .serve_until_disconnect()
@@ -590,7 +590,7 @@ mod tests {
 
         let listener =
             TcpListener::bind(("127.0.0.1", 3240)).expect("USB/IP TCP port 3240 must be available");
-        let config = UsbIpServerConfig::new("1-2", 1, 2, 0x1209, 0x0001);
+        let config = UsbIpServerConfig::new("1-2", 1, 2, 0x0424, 0x0007);
         let server_thread = std::thread::spawn(move || {
             UsbIpServer::new(
                 listener,
@@ -696,7 +696,7 @@ mod tests {
 
         let listener =
             TcpListener::bind(("127.0.0.1", 3240)).expect("USB/IP TCP port 3240 must be available");
-        let config = UsbIpServerConfig::new("1-2", 1, 2, 0x1209, 0x0001);
+        let config = UsbIpServerConfig::new("1-2", 1, 2, 0x0424, 0x0007);
         let server_thread = std::thread::spawn(move || {
             UsbIpServer::new(
                 listener,
@@ -710,7 +710,7 @@ mod tests {
             let _image_dir = image_dir;
             attach_usbip_device()?;
             (|| -> Result<(), String> {
-                grant_libusb_access(0x1209, 0x0001).map_err(|error| error.to_string())?;
+                grant_libusb_access(0x0424, 0x0007).map_err(|error| error.to_string())?;
                 let output = Command::new(recovery_agent)
                     .arg("--caliptra-fmc-rt")
                     .arg(caliptra_fmc_rt)
@@ -823,7 +823,7 @@ mod tests {
 
         let listener =
             TcpListener::bind(("127.0.0.1", 3240)).expect("USB/IP TCP port 3240 must be available");
-        let config = UsbIpServerConfig::new("1-2", 1, 2, 0x1209, 0x0001);
+        let config = UsbIpServerConfig::new("1-2", 1, 2, 0x0424, 0x0007);
         let server_thread = std::thread::spawn(move || {
             UsbIpServer::new(
                 listener,
@@ -835,7 +835,7 @@ mod tests {
 
         let attach_thread = std::thread::spawn(|| {
             attach_usbip_device()?;
-            grant_libusb_access(0x1209, 0x0001).map_err(|error| error.to_string())
+            grant_libusb_access(0x0424, 0x0007).map_err(|error| error.to_string())
         });
         while !attach_thread.is_finished() {
             hw.step();
@@ -1019,7 +1019,7 @@ mod tests {
                 let devices = context.devices().ok()?;
                 let result = devices.iter().find_map(|device| {
                     let descriptor = device.device_descriptor().ok()?;
-                    (descriptor.vendor_id() == 0x1209 && descriptor.product_id() == 0x0001)
+                    (descriptor.vendor_id() == 0x0424 && descriptor.product_id() == 0x0007)
                         .then_some((device, descriptor))
                 });
                 if result.is_none() {

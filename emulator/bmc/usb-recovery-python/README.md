@@ -17,8 +17,8 @@ The recovery images are Caliptra FMC/runtime (index 0), the SoC manifest
 2. Download [Zadig](https://zadig.akeo.ie/) and run it as Administrator.
 3. In Zadig, select **Options > List All Devices**.
 4. Select the recovery interface. It may appear as **OCP Secure Firmware
-   Recovery**, an unknown USB device, or its USB ID `1209:0001`.
-5. Confirm that the selected device has vendor ID `1209` and product ID `0001`,
+  Recovery**, an unknown USB device, or its USB ID `0424:0007`.
+5. Confirm that the selected device has vendor ID `0424` and product ID `0007`,
    select **WinUSB**, and choose **Install Driver** or **Replace Driver**.
 
 Be careful to select the recovery device before replacing a driver. Choosing a
@@ -55,7 +55,7 @@ After plugging in the device, confirm that PyUSB can find it:
 python -c "import libusb_package; print([f'{d.idVendor:04x}:{d.idProduct:04x}' for d in libusb_package.find(find_all=True)])"
 ```
 
-The output should include `1209:0001`.
+The output should include `0424:0007`.
 
 ## Run
 
@@ -66,12 +66,12 @@ python .\usb_recovery.py `
   --mcu-runtime "C:\path\to\mcu-runtime.bin"
 ```
 
-The default USB ID is `1209:0001`. Override it when needed:
+The default USB ID is `0424:0007`. Override it when needed:
 
 ```powershell
 python .\usb_recovery.py `
-  --vendor-id 0x1209 `
-  --product-id 0x0001 `
+  --vendor-id 0x0424 `
+  --product-id 0x0007 `
   --caliptra-fmc-rt "C:\path\to\caliptra-fmc-rt.bin" `
   --soc-manifest "C:\path\to\soc-manifest.bin" `
   --mcu-runtime "C:\path\to\mcu-runtime.bin"
@@ -80,7 +80,7 @@ python .\usb_recovery.py `
 If the application reports that the device was not found, verify its hardware
 ID in Device Manager and rerun the PyUSB discovery command above. If claiming
 the interface fails, use Zadig to confirm that **WinUSB** is bound to the
-`1209:0001` recovery interface.
+`0424:0007` recovery interface.
 
 ## Test
 

@@ -249,7 +249,7 @@ impl ExamplarUsbDriver {
 
         match desc_type {
             Some(DescriptorType::Device) => {
-                let desc = DeviceDescriptor::ocp(0x0200, 0x1209, 0x0001, 0x0100, 0, 0, 0);
+                let desc = DeviceDescriptor::ocp(0x0200, 0x0424, 0x0007, 0x0100, 0, 0, 0);
                 let bytes = desc.as_bytes();
                 let len = core::cmp::min(bytes.len(), w_length);
                 self.send_in(&bytes[..len], w_length)?;

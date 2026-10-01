@@ -581,7 +581,7 @@ impl LpcipUsbDriver {
     fn send_descriptor(&self, setup: &SetupPacket) -> Result<(), LpcipUsbError> {
         match setup.descriptor_type() {
             Some(DescriptorType::Device) => {
-                let descriptor = DeviceDescriptor::ocp(0x0200, 0x1209, 0x0001, 0x0100, 0, 0, 0);
+                let descriptor = DeviceDescriptor::ocp(0x0200, 0x0424, 0x0007, 0x0100, 0, 0, 0);
                 self.send_control_read(descriptor.as_bytes(), setup.data_length() as usize)
             }
             Some(DescriptorType::Configuration) => {

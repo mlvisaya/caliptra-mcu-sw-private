@@ -563,7 +563,7 @@ pub extern "C" fn rom_entry() -> ! {
             let mut fifo_regions: [(u8, &mut dyn FifoCmsRegion); 1] = [(1, &mut fifo)];
 
             let desc =
-                DeviceDescriptor::PciVendor(PciVendorDescriptor::new(0x1209, 0x0001, 0, 0, 0));
+                DeviceDescriptor::PciVendor(PciVendorDescriptor::new(0x0424, 0x0007, 0, 0, 0));
             let config = RecoveryDeviceConfig {
                 device_id: DeviceId::new(desc, &[])
                     .ok()
