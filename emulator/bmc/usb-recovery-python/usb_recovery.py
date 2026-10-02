@@ -135,12 +135,14 @@ class PyUsbTransport:
                 REQUEST,
                 int(command),
                 INTERFACE,
-                length,
+                USB_CONTROL_MAX_BYTES,
                 timeout=self._timeout_ms,
             )
         except usb.core.USBError as error:
-            raise RecoveryError(f"OCP {command.name} read failed") from error
-        return bytes(response)
+            raise RecoveryError(
+                f"OCP {command.name} read failed: {error}"
+            ) from error
+        return bytes(response[:length])
 
     def write(self, command: RecoveryCommand, data: bytes) -> None:
         try:
@@ -153,7 +155,9 @@ class PyUsbTransport:
                 timeout=self._timeout_ms,
             )
         except usb.core.USBError as error:
-            raise RecoveryError(f"OCP {command.name} write failed") from error
+            raise RecoveryError(
+                f"OCP {command.name} write failed: {error}"
+            ) from error
         if written != len(data):
             raise RecoveryError(
                 f"short OCP {command.name} write: {written} of {len(data)} bytes"
@@ -290,6 +294,24 @@ class RecoveryAgent:
                     f"device reported recovery failure {recovery_status.name}"
                 )
 
+    def probe(self) -> None:
+        """Read OCP status registers without changing recovery state."""
+        response = self._read_exact(RecoveryCommand.PROT_CAP, 15)
+        if response[:8] != PROT_CAP_MAGIC:
+            raise RecoveryError("invalid PROT_CAP magic")
+        version = f"{response[8]}.{response[9]}"
+        capabilities = int.from_bytes(response[10:12], "little")
+        device_status = self._device_status()
+        recovery_status, image_index = self._recovery_status()
+        log(
+            f"PROT_CAP magic={response[:8].decode('ascii')} "
+            f"version={version} capabilities={capabilities:#06x}"
+        )
+        log(f"DEVICE_STATUS={device_status.name}")
+        log(
+            f"RECOVERY_STATUS={recovery_status.name} image_index={image_index}"
+        )
+
     def _check_capabilities(self) -> None:
         response = self._read_exact(RecoveryCommand.PROT_CAP, 15)
         if response[:8] != PROT_CAP_MAGIC:
@@ -392,9 +414,10 @@ def parse_usb_id(value: str) -> int:
 
 def build_argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--caliptra-fmc-rt", required=True, type=Path)
-    parser.add_argument("--soc-manifest", required=True, type=Path)
-    parser.add_argument("--mcu-runtime", required=True, type=Path)
+    parser.add_argument("--probe", action="store_true")
+    parser.add_argument("--caliptra-fmc-rt", type=Path)
+    parser.add_argument("--soc-manifest", type=Path)
+    parser.add_argument("--mcu-runtime", type=Path)
     parser.add_argument("--vendor-id", type=parse_usb_id, default=DEFAULT_VENDOR_ID)
     parser.add_argument("--product-id", type=parse_usb_id, default=DEFAULT_PRODUCT_ID)
     parser.add_argument("--discovery-timeout", type=float, default=10.0)
@@ -403,14 +426,15 @@ def build_argument_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    args = build_argument_parser().parse_args(argv)
-    try:
-        log("Loading recovery images")
-        images = RecoveryImages(
-            caliptra_fmc_rt=args.caliptra_fmc_rt.read_bytes(),
-            soc_manifest=args.soc_manifest.read_bytes(),
-            mcu_runtime=args.mcu_runtime.read_bytes(),
+    parser = build_argument_parser()
+    args = parser.parse_args(argv)
+    image_paths = (args.caliptra_fmc_rt, args.soc_manifest, args.mcu_runtime)
+    if not args.probe and any(path is None for path in image_paths):
+        parser.error(
+            "--caliptra-fmc-rt, --soc-manifest, and --mcu-runtime are required "
+            "unless --probe is used"
         )
+    try:
         log(f"Opening USB device {args.vendor_id:04x}:{args.product_id:04x}")
         with PyUsbTransport.open(
             args.vendor_id,
@@ -419,7 +443,17 @@ def main(argv: Sequence[str] | None = None) -> int:
             args.transfer_timeout,
         ) as transport:
             log("USB interface claimed")
-            RecoveryAgent(transport).run(images)
+            agent = RecoveryAgent(transport)
+            if args.probe:
+                agent.probe()
+            else:
+                log("Loading recovery images")
+                images = RecoveryImages(
+                    caliptra_fmc_rt=args.caliptra_fmc_rt.read_bytes(),
+                    soc_manifest=args.soc_manifest.read_bytes(),
+                    mcu_runtime=args.mcu_runtime.read_bytes(),
+                )
+                agent.run(images)
         log("Done")
         return 0
     except (OSError, RecoveryError, usb.core.USBError) as error:

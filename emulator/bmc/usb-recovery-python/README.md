@@ -57,6 +57,18 @@ python -c "import libusb_package; print([f'{d.idVendor:04x}:{d.idProduct:04x}' f
 
 The output should include `0424:0007`.
 
+## Probe OCP registers
+
+Read the OCP protocol capability and status registers without starting recovery
+or writing any device state:
+
+```powershell
+python .\usb_recovery.py --probe
+```
+
+A working FPGA OCP register aperture reports the `OCP RECV` capability magic,
+protocol version, capability bitmap, device status, and recovery status.
+
 ## Run
 
 ```powershell

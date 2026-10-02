@@ -7,10 +7,21 @@ import unittest
 from usb_recovery import (
     DeviceStatus,
     FifoStatus,
+    PyUsbTransport,
     RecoveryAgent,
     RecoveryCommand,
     RecoveryImages,
 )
+
+
+class FakeUsbDevice:
+    def __init__(self, response: bytes) -> None:
+        self.response = response
+        self.transfer: tuple[object, ...] | None = None
+
+    def ctrl_transfer(self, *args: object, **kwargs: object) -> bytes:
+        self.transfer = args
+        return self.response
 
 
 def prot_cap() -> bytes:
@@ -43,6 +54,32 @@ class MockTransport:
 
 
 class RecoveryAgentTests(unittest.TestCase):
+    def test_usb_reads_request_advertised_maximum_length(self) -> None:
+        device = FakeUsbDevice(prot_cap())
+        transport = PyUsbTransport(device, 1000)
+
+        response = transport.read(RecoveryCommand.PROT_CAP, len(prot_cap()))
+
+        self.assertEqual(response, prot_cap())
+        self.assertIsNotNone(device.transfer)
+        self.assertEqual(device.transfer[4], 64)
+
+    def test_probe_reads_status_without_writes(self) -> None:
+        transport = MockTransport(
+            [
+                (RecoveryCommand.PROT_CAP, prot_cap()),
+                (
+                    RecoveryCommand.DEVICE_STATUS,
+                    bytes((DeviceStatus.STATUS_PENDING, 0, 0, 0, 0, 0, 0)),
+                ),
+                (RecoveryCommand.RECOVERY_STATUS, bytes((0, 0))),
+            ]
+        )
+
+        RecoveryAgent(transport).probe()
+
+        self.assertEqual(transport.writes, [])
+
     def test_sends_requested_images_in_fifo_chunks(self) -> None:
         reads = [
             (RecoveryCommand.PROT_CAP, prot_cap()),
