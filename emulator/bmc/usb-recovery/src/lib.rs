@@ -15,8 +15,8 @@ const REQUEST: u8 = 0;
 const INTERFACE: u16 = 0;
 const USB_CONTROL_MAX_BYTES: usize = 64;
 
-pub const DEFAULT_VENDOR_ID: u16 = 0x1209;
-pub const DEFAULT_PRODUCT_ID: u16 = 0x0001;
+pub const DEFAULT_VENDOR_ID: u16 = 0x0424;
+pub const DEFAULT_PRODUCT_ID: u16 = 0x0007;
 
 pub trait RecoveryTransport {
     fn read(&mut self, command: RecoveryCommand, response: &mut [u8]) -> Result<usize>;

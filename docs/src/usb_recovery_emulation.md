@@ -1085,9 +1085,11 @@ The controller treats the write as a pending address and commits it only after
 the status stage completes. Thus MCU ROM interprets and initiates the request,
 while hardware enforces the USB-required address-transition timing.
 
-The current `init_and_enumerate()` loop returns after configuration and the
-host's request for the OCP interface string descriptor. At that point the
-dedicated hardware path can claim OCP class requests.
+The `init_and_enumerate()` loop returns after acknowledging a valid non-zero
+`SET_CONFIGURATION` request. String descriptors are served if requested before
+configuration, but enumeration completion does not depend on a host issuing an
+optional string request afterward. At that point the dedicated hardware path
+can claim OCP class requests.
 
 ### B.4 OCP recovery hardware after enumeration
 

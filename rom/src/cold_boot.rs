@@ -1235,6 +1235,8 @@ impl BootFlow for ColdBoot {
         let recovery_boot =
             external_recovery_request || params.request_recovery_boot || params.usb_recovery_boot;
 
+        mci.set_nmi_vector(unsafe { MCU_MEMORY_MAP.rom_offset });
+
         if mcu_managed_recovery_boot
             && (params.image_provider_manager.is_none() || !cfg!(feature = "hw-2-1"))
         {
@@ -1282,7 +1284,6 @@ impl BootFlow for ColdBoot {
             soc.set_cptra_wdt_cfg(1, 800_000_000);
             mci.configure_wdt(800_000_000, 1);
         }
-        mci.set_nmi_vector(unsafe { MCU_MEMORY_MAP.rom_offset });
         mci.set_flow_checkpoint(McuRomBootStatus::WatchdogConfigured.into());
 
         if params.usb_recovery_boot {

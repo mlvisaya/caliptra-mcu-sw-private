@@ -195,22 +195,27 @@ impl LpcipUsbDriver {
         caliptra_mcu_romtime::println!("[usb] Waiting for USB bus reset");
         self.wait_for_bus_reset()?;
         caliptra_mcu_romtime::println!("[usb] Servicing EP0 enumeration requests");
-        let mut configured = false;
 
         loop {
             self.wait_for_setup()?;
             let setup = self.read_setup();
+            let raw = setup.as_bytes();
+            caliptra_mcu_romtime::println!(
+                "[usb] SETUP {:02x} {:02x} {:02x} {:02x} {:02x} {:02x} {:02x} {:02x}",
+                raw[0],
+                raw[1],
+                raw[2],
+                raw[3],
+                raw[4],
+                raw[5],
+                raw[6],
+                raw[7]
+            );
             self.clear_setup_received();
 
             match setup.standard_request() {
                 Some(StandardRequest::GetDescriptor) => {
                     self.send_descriptor(&setup)?;
-                    if configured
-                        && setup.descriptor_type() == Some(DescriptorType::String)
-                        && setup.descriptor_index() == OCP_INTERFACE_STRING_INDEX
-                    {
-                        return Ok(());
-                    }
                 }
                 Some(StandardRequest::SetAddress) => self.set_address(&setup)?,
                 Some(StandardRequest::SetConfiguration) => {
@@ -219,7 +224,8 @@ impl LpcipUsbDriver {
                         continue;
                     }
                     self.send_zlp_in()?;
-                    configured = true;
+                    caliptra_mcu_romtime::println!("[usb] EP0 enumeration complete");
+                    return Ok(());
                 }
                 Some(StandardRequest::GetConfiguration) => {
                     self.send_control_read(&[0], setup.data_length() as usize)?;
@@ -411,7 +417,7 @@ impl LpcipUsbDriver {
             .dev0_csr_ulpidebug
             .write(usb_combo::bits::UlpidebugT::PhyMode::SET);
 
-        self.verify_phy_scratch()?;
+        //        self.verify_phy_scratch()?;
 
         let vendor_id = [self.ulpi_read(0x00)?, self.ulpi_read(0x01)?];
         let product_id = [self.ulpi_read(0x02)?, self.ulpi_read(0x03)?];
@@ -503,7 +509,6 @@ impl LpcipUsbDriver {
             self.write_memory_word(descriptor, 0);
         }
         self.write_memory_word(SETUP_DESCRIPTOR, Self::buffer_offset(SETUP_BUFFER_OFFSET));
-        self.arm_out(SETUP_PACKET_LEN);
         for descriptor in FIRST_GENERIC_DESCRIPTOR..DESCRIPTOR_COUNT {
             self.write_memory_word(descriptor, DISABLED);
         }
@@ -548,7 +553,6 @@ impl LpcipUsbDriver {
         self.regs
             .dev0_csr_intstat
             .set(usb_combo::bits::IntstatT::DevInt::SET.value);
-        self.arm_out(SETUP_PACKET_LEN);
         Ok(())
     }
 
@@ -581,7 +585,7 @@ impl LpcipUsbDriver {
     fn send_descriptor(&self, setup: &SetupPacket) -> Result<(), LpcipUsbError> {
         match setup.descriptor_type() {
             Some(DescriptorType::Device) => {
-                let descriptor = DeviceDescriptor::ocp(0x0200, 0x1209, 0x0001, 0x0100, 0, 0, 0);
+                let descriptor = DeviceDescriptor::ocp(0x0200, 0x0424, 0x0007, 0x0100, 0, 0, 0);
                 self.send_control_read(descriptor.as_bytes(), setup.data_length() as usize)
             }
             Some(DescriptorType::Configuration) => {
@@ -624,15 +628,23 @@ impl LpcipUsbDriver {
     fn send_control_read(&self, data: &[u8], requested: usize) -> Result<(), LpcipUsbError> {
         let length = core::cmp::min(data.len(), requested);
         self.write_buffer(IN_BUFFER_OFFSET, &data[..length]);
+        caliptra_mcu_romtime::println!("[usb] EP0 IN data arm: {} bytes", length);
         self.arm_in(length);
         self.wait_descriptor_inactive(EP0_IN_DESCRIPTOR)?;
-        self.arm_out(0);
-        self.wait_descriptor_inactive(EP0_OUT_DESCRIPTOR)
+        caliptra_mcu_romtime::println!("[usb] EP0 IN data complete");
+        caliptra_mcu_romtime::println!("[usb] EP0 OUT status arm");
+        self.arm_out(MAX_TRANSFER_SIZE.into());
+        self.wait_descriptor_inactive(EP0_OUT_DESCRIPTOR)?;
+        caliptra_mcu_romtime::println!("[usb] EP0 OUT status complete");
+        Ok(())
     }
 
     fn send_zlp_in(&self) -> Result<(), LpcipUsbError> {
+        caliptra_mcu_romtime::println!("[usb] EP0 IN status arm");
         self.arm_in(0);
-        self.wait_descriptor_inactive(EP0_IN_DESCRIPTOR)
+        self.wait_descriptor_inactive(EP0_IN_DESCRIPTOR)?;
+        caliptra_mcu_romtime::println!("[usb] EP0 IN status complete");
+        Ok(())
     }
 
     fn arm_out(&self, length: usize) {
@@ -730,10 +742,10 @@ mod tests {
     }
 
     #[test]
-    fn setup_descriptor_encodes_length_and_offset() {
+    fn ep0_out_descriptor_encodes_length_and_offset() {
         assert_eq!(
-            LpcipUsbDriver::buffer_descriptor(OUT_BUFFER_OFFSET, SETUP_PACKET_LEN),
-            (8 << NBYTES_SHIFT) | 5
+            LpcipUsbDriver::buffer_descriptor(OUT_BUFFER_OFFSET, MAX_TRANSFER_SIZE.into()),
+            (u32::from(MAX_TRANSFER_SIZE) << NBYTES_SHIFT) | 5
         );
     }
 

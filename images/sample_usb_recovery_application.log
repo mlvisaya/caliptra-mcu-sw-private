@@ -7,12 +7,12 @@ Look for PID/VID of Caliptra USB device
 
 visayamv@DESKTOP-4VTMK3G:~/projects/caliptra-mcu-sw/emulator/bmc$ lsusb
 Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub
-Bus 001 Device 010: ID 1209:0001 Generic pid.codes Test PID
+Bus 001 Device 010: ID 0424:0007 Standard Microsystems Corp.
 Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
 
 visayamv@DESKTOP-4VTMK3G:~/projects/caliptra-mcu-sw/emulator/bmc$ cargo run -p caliptra-mcu-usb-recovery -- --caliptra-fmc-rt caliptra_fw.bin --soc-manifest soc_manifest.bin --mcu-runtime mcu_runtime.bin --vendor-id 4617 --product-id 1
 [usb-recovery] Loading recovery images
-[usb-recovery] Opening USB device 1209:0001
+[usb-recovery] Opening USB device 0424:0007
 [usb-recovery] USB interface claimed
 [usb-recovery] Checking device capabilities
 [usb-recovery] Device supports status reporting and FIFO CMS
