@@ -50,16 +50,21 @@ impl LibusbTransport {
 
 impl RecoveryTransport for LibusbTransport {
     fn read(&mut self, command: RecoveryCommand, response: &mut [u8]) -> Result<usize> {
-        self.handle
+        let mut transfer = [0u8; USB_CONTROL_MAX_BYTES];
+        let received = self
+            .handle
             .read_control(
                 REQUEST_TYPE_IN,
                 REQUEST,
                 command as u16,
                 INTERFACE,
-                response,
+                &mut transfer,
                 self.timeout,
             )
-            .with_context(|| format!("OCP {command:?} read failed"))
+            .with_context(|| format!("OCP {command:?} read failed"))?;
+        let copied = received.min(response.len());
+        response[..copied].copy_from_slice(&transfer[..copied]);
+        Ok(copied)
     }
 
     fn write(&mut self, command: RecoveryCommand, data: &[u8]) -> Result<()> {
