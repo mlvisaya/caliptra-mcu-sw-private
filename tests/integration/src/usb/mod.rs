@@ -337,6 +337,12 @@ mod tests {
         }
         agent_thread.join().unwrap();
         server_thread.join().unwrap().unwrap();
+        assert!(
+            hw.output()
+                .peek()
+                .contains("[usb] EP0 enumeration complete"),
+            "MCU ROM did not return after SET_CONFIGURATION"
+        );
         assert_eq!(
             setup_observer.setup_packet(),
             [
