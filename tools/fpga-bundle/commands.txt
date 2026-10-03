@@ -1,0 +1,96 @@
+All helper scripts are in: /mnt/c/Users/marcovisaya/OneDrive - Microsoft/Desktop/htg940/marco
+
+cd first to /mnt/c/Users/marcovisaya/OneDrive - Microsoft/Desktop/htg940/marco
+
+
+1. Create a new bitstream with the new MCU ROM and Caliptra ROM:
+
+bash ./update-htg940-roms.sh \
+  ./caliptra-fpga-rom28.bin \
+  ./caliptra-mcu-rom-fpga-test-lpcip-usb-ocp-recovery-20261002-1057.bin \
+  ./htg940_bit28.bit
+
+2. Programming the bitstream to FPGA:
+
+bash ./program-htg940.sh ./htg940_bit28.bit htg940_usb_dual_ila.ltx
+
+3. Monitor serial port
+
+bash ./monitor-htg940.sh
+
+4. Run USB Recovery application
+
+bash ./run-usb-recovery.sh
+
+
+5. Building the caliptra core ROM
+
+in ~/projects/caliptra-sw:
+
+cargo run --release -p caliptra-builder -- \
+  --rom-fpga-with-log \
+  target/riscv32imc-unknown-none-elf/firmware/caliptra-fpga-rom.bin
+
+cp target/riscv32imc-unknown-none-elf/firmware/caliptra-fpga-rom.bin /mnt/c/Users/marcovisaya/OneDrive\ -\ Microsoft/Desktop/htg940/marco/caliptra-fpga-rom25.bin
+
+6. Building the MCU ROM:
+
+in ~/projects/caliptra-mcu-sw
+
+cargo xtask rom-build \
+  --platform fpga \
+  --features test-lpcip-usb-ocp-recovery
+
+cp target/riscv32imc-unknown-none-elf/release/caliptra-mcu-rom-fpga-test-lpcip-usb-ocp-recovery.bin /mnt/c/Users/marcovisaya/OneDrive\ -\ Microsoft/Desktop/htg940/marco/.
+
+7. Building Caliptra FMC/RT, SoC Manifest and MCU RT:
+
+cargo xtask all-build \
+  --platform fpga \
+  --output target/usb-recovery-minimal.zip
+
+Deploy all three artifacts from the same ZIP in one command:
+
+unzip -o target/usb-recovery-minimal.zip \
+  caliptra_fw.bin soc_manifest.bin mcu_runtime.bin \
+  -d "/mnt/c/Users/marcovisaya/OneDrive - Microsoft/Desktop/htg940/marco/usb-recovery-python"
+
+8. Build all five FPGA test artifacts with one command:
+
+bash tools/fpga-bundle/build-htg940-fpga-artifacts.sh
+
+9. Package the five FPGA test artifacts:
+
+bash tools/fpga-bundle/create-htg940-fpga-bundle.sh \
+  --output target/htg940-fpga-test-bundle.zip
+
+The bundle contains the Caliptra ROM, MCU ROM, Caliptra FMC/RT, SoC manifest,
+MCU runtime, SHA-384 checksums, and source commit IDs.
+
+Verify the bundle without accessing hardware:
+
+bash tools/fpga-bundle/test-htg940-fpga-bundle.sh \
+  target/htg940-fpga-test-bundle.zip \
+  --verify-only
+
+Create a new bitstream, program the FPGA, and run USB recovery:
+
+bash tools/fpga-bundle/test-htg940-fpga-bundle.sh \
+  target/htg940-fpga-test-bundle.zip \
+  --helper-dir "/mnt/c/Users/marcovisaya/OneDrive - Microsoft/Desktop/htg940/marco"
+
+The generated bitstream, UART log, and recovery log are written beside the bundle.
+
+10. Recover Serial port when it hangs:
+
+Start the watcher once from an Administrator PowerShell:
+
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\Users\marcovisaya\OneDrive - Microsoft\Desktop\htg940\marco\restart-htg940-serial-watcher.ps1"
+
+Trigger a serial-port restart from WSL:
+
+bash ./restart-htg940-serial.sh
+
+Stop the watcher from WSL (or press Ctrl+C in its PowerShell window):
+
+bash ./restart-htg940-serial.sh --stop
