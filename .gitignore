@@ -42,6 +42,7 @@ platforms/fpga/runtime/user-app-layout.ld
 # Zstandard Archives (e.g. cargo nextest test archive)
 **/*.tar.zst
 **/*.zip
+!images/*.zip
 
 # Generated JSON files (e.g. for any configurations or test results)
 *.json

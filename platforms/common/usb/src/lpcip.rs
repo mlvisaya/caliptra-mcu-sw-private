@@ -628,22 +628,22 @@ impl LpcipUsbDriver {
     fn send_control_read(&self, data: &[u8], requested: usize) -> Result<(), LpcipUsbError> {
         let length = core::cmp::min(data.len(), requested);
         self.write_buffer(IN_BUFFER_OFFSET, &data[..length]);
-        caliptra_mcu_romtime::println!("[usb] EP0 IN data arm: {} bytes", length);
+//        caliptra_mcu_romtime::println!("[usb] EP0 IN data arm: {} bytes", length);
         self.arm_in(length);
         self.wait_descriptor_inactive(EP0_IN_DESCRIPTOR)?;
-        caliptra_mcu_romtime::println!("[usb] EP0 IN data complete");
-        caliptra_mcu_romtime::println!("[usb] EP0 OUT status arm");
+//        caliptra_mcu_romtime::println!("[usb] EP0 IN data complete");
+//        caliptra_mcu_romtime::println!("[usb] EP0 OUT status arm");
         self.arm_out(MAX_TRANSFER_SIZE.into());
         self.wait_descriptor_inactive(EP0_OUT_DESCRIPTOR)?;
-        caliptra_mcu_romtime::println!("[usb] EP0 OUT status complete");
+//        caliptra_mcu_romtime::println!("[usb] EP0 OUT status complete");
         Ok(())
     }
 
     fn send_zlp_in(&self) -> Result<(), LpcipUsbError> {
-        caliptra_mcu_romtime::println!("[usb] EP0 IN status arm");
+//        caliptra_mcu_romtime::println!("[usb] EP0 IN status arm");
         self.arm_in(0);
         self.wait_descriptor_inactive(EP0_IN_DESCRIPTOR)?;
-        caliptra_mcu_romtime::println!("[usb] EP0 IN status complete");
+//        caliptra_mcu_romtime::println!("[usb] EP0 IN status complete");
         Ok(())
     }
 
