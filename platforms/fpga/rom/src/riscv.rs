@@ -237,7 +237,7 @@ pub extern "C" fn rom_entry() -> ! {
                         }
             */
             let result = usb_driver.init_and_enumerate();
-            usb_driver.dump_registers();
+//            usb_driver.dump_registers();
             if result.is_err() {
                 caliptra_mcu_rom_common::fatal_error(
                     caliptra_mcu_error::McuError::ROM_COLD_BOOT_RECOVERY_NOT_CONFIGURED_ERROR,
