@@ -1255,23 +1255,30 @@ impl BootFlow for ColdBoot {
             soc.set_cptra_wdt_cfg(0, straps.cptra_wdt_cfg0);
             soc.set_cptra_wdt_cfg(1, straps.cptra_wdt_cfg1);
 
-            let state = SecurityState::from(mci.security_state());
-            let lifecycle = state.device_lifecycle();
-            match (state.debug_locked(), lifecycle) {
-                (false, _) => {
-                    mci.configure_wdt(
-                        straps.mcu_wdt_cfg0_debug.into(),
-                        straps.mcu_wdt_cfg1_debug.into(),
-                    );
-                }
-                (true, DeviceLifecycle::Manufacturing) => {
-                    mci.configure_wdt(
-                        straps.mcu_wdt_cfg0_manufacturing.into(),
-                        straps.mcu_wdt_cfg1_manufacturing.into(),
-                    );
-                }
-                (true, _) => {
-                    mci.configure_wdt(straps.mcu_wdt_cfg0.into(), straps.mcu_wdt_cfg1.into());
+            if params.usb_recovery_boot {
+                caliptra_mcu_romtime::println!(
+                    "[mcu-rom] Disabling MCU watchdog for USB recovery boot"
+                );
+                mci.disable_wdt();
+            } else {
+                let state = SecurityState::from(mci.security_state());
+                let lifecycle = state.device_lifecycle();
+                match (state.debug_locked(), lifecycle) {
+                    (false, _) => {
+                        mci.configure_wdt(
+                            straps.mcu_wdt_cfg0_debug.into(),
+                            straps.mcu_wdt_cfg1_debug.into(),
+                        );
+                    }
+                    (true, DeviceLifecycle::Manufacturing) => {
+                        mci.configure_wdt(
+                            straps.mcu_wdt_cfg0_manufacturing.into(),
+                            straps.mcu_wdt_cfg1_manufacturing.into(),
+                        );
+                    }
+                    (true, _) => {
+                        mci.configure_wdt(straps.mcu_wdt_cfg0.into(), straps.mcu_wdt_cfg1.into());
+                    }
                 }
             }
         } else {
