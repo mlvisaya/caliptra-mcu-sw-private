@@ -248,87 +248,114 @@ The USB layer owns enumeration, packetization, NAK, STALL, and status stages. Th
 
 ### 6.6 Image transfer
 
-After enumeration, the RA discovers the device capabilities and transfers each required image using either an indirect (buffered) CMS or a FIFO (streaming) CMS. The enumeration exchange is omitted here because it is shown in Section 5.2.
+After enumeration, the RA transfers three images in the order requested by
+`RECOVERY_STATUS`: Caliptra FMC/runtime at index 0, the SoC manifest at index
+1, and MCU runtime at index 2. Four actors participate in the physical
+HTG-940 flow:
+
+- the RA issues OCP reads and writes as USB EP0 control transfers;
+- the dedicated USB/OCP hardware decodes those requests, stores the recovery
+  registers, and implements the FIFO;
+- MCU ROM initializes and enumerates USB, starts Caliptra's
+  `RI_DOWNLOAD_FIRMWARE` mailbox command, and waits for MCU firmware readiness;
+  and
+- Caliptra ROM handles image 0, while Caliptra runtime handles images 1 and 2
+  and ultimately authorizes and activates MCU runtime.
+
+The enumeration exchange is omitted below because it is shown in Section 5.2.
+The diagram shows the FIFO CMS used by the current host agent. An indirect CMS
+has the same status and activation handshake, but buffers the complete image
+before activation instead of streaming through the FIFO.
 
 ```mermaid
 sequenceDiagram
     participant RA as Recovery Agent
     participant Transport as Linux USB/IP + VHCI
-    participant USB as Emulated USB Controller
-    participant FW as MCU ROM USB Stack
-    participant OCP as OCP RecoveryStateMachine
-    participant CMS as Indirect / FIFO CMS
-    participant ROM as OcpImageProvider + MCU ROM
-    participant CRIF as Caliptra Recovery I/F
+    participant USB as USB Controller + OCP Bridge
+    participant CROM as Caliptra ROM
+    participant CRT as Caliptra Runtime
+    participant MCU as MCU ROM
 
     Note over RA,Transport: USB enumeration complete and device is Configured
 
-    RA->>Transport: libusb control read: PROT_CAP
-    Transport->>USB: USB/IP control URB
-    USB->>FW: EP0 SETUP (0xA1, PROT_CAP)
-    FW->>OCP: Process OCP read
-    OCP-->>FW: Capabilities and transfer limits
-    FW-->>USB: EP0 IN data + OUT status
-    USB-->>Transport: Complete URB
-    Transport-->>RA: PROT_CAP response
+    MCU->>CROM: RI_DOWNLOAD_FIRMWARE mailbox command
+    CROM->>USB: Publish PROT_CAP
+    CROM->>USB: DEVICE_STATUS = RecoveryMode
+    CROM->>USB: RECOVERY_STATUS = AwaitingImage, index 0
 
-    RA->>Transport: Read DEVICE_STATUS and RECOVERY_STATUS
-    Transport->>USB: USB/IP control URBs
-    USB->>FW: OCP control reads
-    FW->>OCP: Process status reads
-    OCP-->>RA: RecoveryMode / AwaitingImage
+    RA->>Transport: Read PROT_CAP and poll DEVICE_STATUS
+    Transport->>USB: OCP control reads
+    USB-->>RA: Capabilities and RecoveryMode
+    RA->>USB: RECOVERY_CTRL = 0 (initialize)
 
-    loop Each image: Caliptra firmware, SoC manifest, MCU runtime
-        Note over RA,CRIF: Select the image requested by the current recovery stage
-
-        alt Indirect CMS (buffered image)
-            RA->>OCP: INDIRECT_CTRL(CMS, offset=0) via USB EP0
-            OCP->>CMS: Select indirect region and offset
-
-            loop Until complete image is buffered
-                RA->>OCP: INDIRECT_DATA(image chunk) via USB EP0
-                OCP->>CMS: Write chunk and advance offset
-                OCP-->>RA: IN status ZLP
-            end
-
-            RA->>OCP: RECOVERY_CTRL(Activate) via USB EP0
-            OCP-->>ROM: ActivateRecoveryImage
-
-            loop Read buffered image
-                ROM->>CMS: Read next image block
-                CMS-->>ROM: Image bytes
-                ROM->>CRIF: Write image block
-            end
-        else FIFO CMS (streaming image)
-            RA->>OCP: INDIRECT_FIFO_CTRL(CMS, image size) via USB EP0
-            OCP->>CMS: Select FIFO region and set image size
-            OCP-->>ROM: IndirectFifoCtrlChanged(image size)
-
-            loop Until complete image is streamed
-                RA->>OCP: INDIRECT_FIFO_DATA(image chunk) via USB EP0
-                OCP->>CMS: Enqueue image bytes
-                ROM->>CMS: Drain next image block
-                CMS-->>ROM: Image bytes
-                ROM->>CRIF: Write image block
-                OCP-->>RA: IN status ZLP
-            end
-
-            RA->>OCP: RECOVERY_CTRL(Activate) via USB EP0
-            OCP-->>ROM: ActivateRecoveryImage
+    rect rgb(235, 245, 255)
+        Note over RA,CROM: Image 0: Caliptra FMC/runtime
+        RA->>USB: Read RECOVERY_STATUS (AwaitingImage, index 0)
+        RA->>USB: INDIRECT_FIFO_CTRL(CMS, image size)
+        loop Until image 0 is transferred
+            RA->>USB: INDIRECT_FIFO_DATA(image chunk)
+            CROM->>USB: DMA-drain FIFO into mailbox SRAM
+            RA->>USB: Read INDIRECT_FIFO_STATUS for space
         end
-
-        ROM->>CRIF: Mark payload complete and activate image
-        CRIF-->>ROM: Authentication / activation status
-        ROM-->>OCP: Report StageSuccess or Complete
-        RA->>OCP: Poll DEVICE_STATUS / RECOVERY_STATUS
-        OCP-->>RA: Awaiting next image or recovery complete
+        CROM->>USB: DEVICE_STATUS = RecoveryPending
+        RA->>USB: Poll DEVICE_STATUS until RecoveryPending
+        RA->>USB: RECOVERY_CTRL(Activate = 0x0f)
+        CROM->>CROM: Authenticate Caliptra firmware
+        CROM->>USB: Clear activation and FIFO control
+        CROM->>USB: RECOVERY_STATUS = AwaitingImage, index 1
+        CROM->>USB: DEVICE_STATUS = RecoveryMode
     end
 
-    CRIF-->>ROM: Recovery boot complete
-    Note over RA,CRIF: MCU boot continues and OCP recovery interface remains available
+    CROM->>CRT: Start authenticated FMC/runtime
+
+    rect rgb(240, 255, 240)
+        Note over RA,CRT: Image 1: SoC authorization manifest
+        RA->>USB: Read RECOVERY_STATUS (AwaitingImage, index 1)
+        RA->>USB: INDIRECT_FIFO_CTRL + INDIRECT_FIFO_DATA
+        CRT->>USB: DMA-drain manifest
+        CRT->>USB: DEVICE_STATUS = RecoveryPending
+        RA->>USB: Poll RecoveryPending, then Activate
+        CRT->>CRT: Validate and install authorization manifest
+        CRT->>USB: RECOVERY_STATUS = AwaitingImage, index 2
+        CRT->>USB: DEVICE_STATUS = RecoveryMode
+    end
+
+    rect rgb(255, 245, 235)
+        Note over RA,CRT: Image 2: MCU runtime
+        RA->>USB: Read RECOVERY_STATUS (AwaitingImage, index 2)
+        RA->>USB: INDIRECT_FIFO_CTRL + INDIRECT_FIFO_DATA
+        CRT->>USB: DMA-drain image into MCU SRAM
+        CRT->>USB: DEVICE_STATUS = RecoveryPending
+        RA->>USB: Poll RecoveryPending, then Activate
+        Note over RA: Current agent returns after submitting final activation
+        CRT->>CRT: Hash and authorize MCU runtime
+        CRT->>MCU: Set firmware-ready and firmware-boot reset reason
+    end
+
+    MCU->>MCU: Firmware boot reset and jump to MCU runtime
 ```
 
-Every arrow marked "via USB EP0" represents one complete OCP control transfer through `libusb`, USB/IP, the emulated controller, and the MCU ROM USB stack. Reporting `StageSuccess` or `Complete` corresponds to calling `RecoveryStateMachine::complete_activation` after the Caliptra recovery interface returns the image result; the ROM adapter must wire this completion path. OCP transfer size and USB packet size are independent. For example, a 1024-byte `INDIRECT_FIFO_DATA` command is one OCP control transfer containing sixteen 64-byte USB packets.
+The register responsibilities and waits are:
+
+| Actor | Modifies | Reads or waits for |
+| --- | --- | --- |
+| RA | Writes `RECOVERY_CTRL`, `INDIRECT_FIFO_CTRL`, and `INDIRECT_FIFO_DATA` | Reads `PROT_CAP`; polls `DEVICE_STATUS`, `RECOVERY_STATUS`, and `INDIRECT_FIFO_STATUS` |
+| USB/OCP hardware | Decodes OCP commands, updates FIFO pointers and live FIFO status, records protocol errors, and exposes payload/activation indications | Accepts host EP0 requests and firmware-side MMIO/DMA accesses |
+| MCU ROM | Initializes the USB controller, performs standard enumeration, sends `RI_DOWNLOAD_FIRMWARE`, and later controls recovery shutdown/reset policy | Waits for the Caliptra mailbox operation, MCU firmware-ready, and Caliptra runtime-ready indications; it does not normally rewrite OCP status registers in this USB flow |
+| Caliptra ROM | Publishes capabilities and image-0 device/recovery status; clears activation/FIFO state after processing | Waits for image-0 payload availability and host activation |
+| Caliptra runtime | Publishes image-1/image-2 status, clears stage controls, and signals MCU firmware readiness/reset | Waits for the SoC manifest and MCU runtime payloads and their host activation requests |
+
+In the transaction-level emulator, the dedicated OCP command decoder is
+replaced by the MCU-side `RecoveryStateMachine`, CMS objects, and
+`OcpImageProvider`. That software path must reproduce the same host-visible
+register values, image indices, FIFO backpressure, and activation ordering.
+This is an internal ownership difference, not a different RA protocol.
+
+Each OCP request is one complete EP0 control transfer through `libusb`, USB/IP,
+the emulated controller, and the MCU ROM USB stack. OCP transfer size and USB
+packet size are independent. For example, a 1024-byte
+`INDIRECT_FIFO_DATA` command is one OCP control transfer containing sixteen
+64-byte USB packets.
 
 ### 6.7 Error hierarchy
 
